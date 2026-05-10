@@ -1,37 +1,34 @@
 # Progress Tracker
 
-Update this file after every meaningful implementation
-change.
-
 ## Current Phase
 
-- [e.g. Not started / In progress / Complete]
+- [x] Initial setup and configuration fixing
 
 ## Current Goal
 
-- [What you are building right now]
+- [x] Fix ESLint crash during linting
 
 ## Completed
 
-- None yet.
+- Fixed ESLint crash by restricting `vue/max-attributes-per-line` rule to `.vue` files only.
+- Ran `pnpm lint --fix` to clean up the codebase.
 
 ## In Progress
 
-- None yet.
+- None.
 
 ## Next Up
 
-- [First unit to build]
+- Begin core feature implementation according to `project-overview.md`.
 
 ## Open Questions
 
-- [Any unresolved product or technical decisions]
+- None yet.
 
 ## Architecture Decisions
 
-- [Decisions made that affect the system design or
-  data model — include why the decision was made]
+- **ESLint Configuration Strategy**: Use separate config objects in the flat config array to target specific file types for rules that rely on specific parsers (e.g., Vue rules). This prevents crashes when linting non-target files like Markdown.
 
 ## Session Notes
 
-- [Context needed to resume work in the next session]
+- ESLint is now fully functional and passing.

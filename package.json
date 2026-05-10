@@ -1,13 +1,15 @@
 {
   "name": "the-signal",
-  "private": true,
   "type": "module",
+  "private": true,
+  "packageManager": "pnpm@10.33.2",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
@@ -18,10 +20,11 @@
     "tailwindcss": "^4.2.4"
   },
   "devDependencies": {
+    "@antfu/eslint-config": "^8.2.0",
     "@nuxt/eslint": "^1.15.2",
     "eslint": "^10.3.0",
+    "eslint-plugin-format": "^2.0.1",
     "typescript": "^6.0.3",
     "vue-tsc": "^3.2.7"
-  },
-  "packageManager": "pnpm@10.33.2"
+  }
 }

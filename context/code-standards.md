@@ -4,7 +4,7 @@
 
 - Single responsibility: Each source file should have a clear, focused scope/purpose.
 - Split large files: Break files when they become large or handle too many concerns.
-- Type separation: Always separate types and interfaces into types.ts or types/*.ts.
+- Type separation: Always separate types and interfaces into types.ts or types/\*.ts.
 - Constants extraction: Move constants to a dedicated constants.ts file.
 - Fix root causes, do not layer workarounds.
 

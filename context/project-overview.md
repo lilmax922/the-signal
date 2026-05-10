@@ -12,6 +12,7 @@
 4. Actionable Intelligence: Provide clear, emotion-free trend analysis that focuses on factual impact rather than market hype.
 
 ## Core User Flow
+
 1. Authentication: User signs in using Google or GitHub (via Supabase Auth).
 2. Discovery & Exploration: Users browse the "Global Fact Stream" filtered by pre-defined categories (e.g., Tech, Economic).
 3. Search & Track: Users use the **Semantic Command Palette** to search for specific entities (e.g., "NVIDIA"). From the search results or Signal Cards, users can directly "Follow" AI-generated tags to build their personalized tracking list.

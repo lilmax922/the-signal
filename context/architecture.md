@@ -2,16 +2,16 @@
 
 ## Stack
 
-| Layer     | Technology                         | Role   |
-| --------- | ---------------------------------- | ------ |
-| Framework | Nuxt.js 4 + TypeScript             | Full-stack app with client/server boundaries. |
-| UI        | TailwindCSS + NuxtUI               | Component composition and styling. |
-| Auth      | Supabase Auth                      | Handles Google & GitHub OAuth integration and manages user sessions and identity. |
-| Database  | Drizzle ORM + Supabase(PostgreSQL) | Primary structured storage using Drizzle ORM for type-safe data operations (Signals, Tags, Profiles). |
-| Storage   | Supabase Storage                   | Stores large binary artifacts like news thumbnail blobs and static media assets. |
-| AI Pipeline  | Trigger.dev + OpenRouter        | Trigger.dev: Long-running background jobs (Scraping, De-noising).<br>OpenRouter: Access to LLMs (e.g., Gemma 9B) for factual extraction. |
-| Email     | Resend                             | Transactional email service for the "Morning Pulse" personalized digest. |
-| Package Manager | pnpm                         | Package manager for the project. |
+| Layer           | Technology                         | Role                                                                                                                                     |
+| --------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework       | Nuxt.js 4 + TypeScript             | Full-stack app with client/server boundaries.                                                                                            |
+| UI              | TailwindCSS + NuxtUI               | Component composition and styling.                                                                                                       |
+| Auth            | Supabase Auth                      | Handles Google & GitHub OAuth integration and manages user sessions and identity.                                                        |
+| Database        | Drizzle ORM + Supabase(PostgreSQL) | Primary structured storage using Drizzle ORM for type-safe data operations (Signals, Tags, Profiles).                                    |
+| Storage         | Supabase Storage                   | Stores large binary artifacts like news thumbnail blobs and static media assets.                                                         |
+| AI Pipeline     | Trigger.dev + OpenRouter           | Trigger.dev: Long-running background jobs (Scraping, De-noising).<br>OpenRouter: Access to LLMs (e.g., Gemma 9B) for factual extraction. |
+| Email           | Resend                             | Transactional email service for the "Morning Pulse" personalized digest.                                                                 |
+| Package Manager | pnpm                               | Package manager for the project.                                                                                                         |
 
 ## System Boundaries
 
@@ -24,19 +24,19 @@
 ## Storage Model
 
 - **Database (PostgreSQL)**:
-    - Metadata: Stores bilingual signal content, AI-generated tags, and source metadata.
-    - Relationships: Manages user-to-tag "Tracked Interests" and "Saved Signals" mappings.
-    - Task Records: Logs Trigger.dev run states and fact_hash for deduplication.
+  - Metadata: Stores bilingual signal content, AI-generated tags, and source metadata.
+  - Relationships: Manages user-to-tag "Tracked Interests" and "Saved Signals" mappings.
+  - Task Records: Logs Trigger.dev run states and fact_hash for deduplication.
 - **Supabase Storage**:
-    - Media Blobs: Stores actual image files (news thumbnails).
-    - References: Only the public URLs or paths to these blobs are stored in the PostgreSQL signals table.
+  - Media Blobs: Stores actual image files (news thumbnails).
+  - References: Only the public URLs or paths to these blobs are stored in the PostgreSQL signals table.
 
 ## Auth and Access Model
 
 - Identity: Every user is identified by a unique UUID issued via Supabase Auth.
 - Access Control:
-    - Public: Global Fact Stream is readable by all users.
-    - Private: Personal collections and interest settings are strictly isolated.
+  - Public: Global Fact Stream is readable by all users.
+  - Private: Personal collections and interest settings are strictly isolated.
 - Data Security: Implements PostgreSQL Row Level Security (RLS) to enforce data isolation at the database level.
 
 ## AI Pre-generation Workflow (The "Refinery" Pipeline)

@@ -36,6 +36,7 @@ If a change cannot be verified end to end quickly, the scope is too broad — sp
 Do not modify the following unless explicitly instructed:
 
 This includes:
+
 - Any third-party library internals.
 
 ## Keeping Docs in Sync
