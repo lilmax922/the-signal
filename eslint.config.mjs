@@ -8,7 +8,12 @@ export default withNuxt(antfu({
   vue: true,
   typescript: true,
   formatters: true,
-  ignores: ['agents/**/*.md', 'context/**/*.md', 'tsconfig.json'],
+  ignores: [
+    'agents/**/*.md',
+    'context/**/*.md',
+    'pnpm-*',
+    'tsconfig.json',
+  ],
 }, {
   rules: {
     'ts/consistent-type-definitions': ['error', 'type'],
