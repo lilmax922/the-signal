@@ -2,7 +2,7 @@
 @import '@nuxt/ui';
 
 @theme static {
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans: 'Inter', 'Noto Sans TC', system-ui, sans-serif;
 
   --color-brand-50: oklch(97% 0.02 205);
   --color-brand-100: oklch(92% 0.04 205);

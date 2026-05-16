@@ -41,7 +41,7 @@ We use NuxtFonts(https://fonts.nuxt.com/) to optimize fonts.
 
 | Role      | Font         | Variable      |
 | --------- | ------------ | ------------- |
-| Text      | `Inter` | `--font-sans` |
+| Text      | `Inter`(for english) and `Noto Sans TC`(for traditional chinese) | `--font-sans` |
 
 ## Border Radius
 

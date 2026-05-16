@@ -17,7 +17,7 @@
   - Black (#000000) as application background
   - Brand color (OKLCH-based) as primary color via `app.config.ts`
   - Default border-radius set to 0.375rem via `--ui-radius`
-  - Inter font configured as `--font-sans`
+  - Inter font for English and Noto Sans TC for Traditional Chinese configured as `--font-sans`
   - Neutral palette set to 'neutral' (balanced gray)
 
 ## In Progress
