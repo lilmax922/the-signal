@@ -6,25 +6,34 @@ The design language is **"Objective Minimalist"** — a calm, high-precision tec
 
 ## Colors
 
-All colors are defined using the **OKLCH** color space to ensure consistent perceptual lightness and professional aesthetics.
+We are using NuxtUI default design system, please following nuxt-ui skill for instruction to config it. 
 
-| Role             | CSS Variable       | Value                 | Description                                      |
-| ---------------- | ------------------ | --------------------- | ------------------------------------------------ |
-| Page background  | `--bg-base`        | `oklch(14% 0.01 258)` | Main application background (Deep Charcoal).     |
-| Surface          | `--bg-surface`     | `oklch(18% 0.01 258)` | Navigation bars, sidebars, and inactive panels.  |
-| Elevated surface | `--bg-elevated`    | `oklch(22% 0.01 258)` | Signal cards and active workspace containers.    |
-| Subtle surface   | `--bg-subtle`      | `oklch(26% 0.02 258)` | Input fields and hover states.                   |
-| Default border   | `--border-default` | `oklch(32% 0.01 258)` | Primary card borders and structural dividers.    |
-| Subtle border    | `--border-subtle`  | `oklch(24% 0.01 258)` | Secondary decorations and tab indicators.        |
-| Primary text     | `--text-primary`   | `oklch(95% 0.01 258)` | Essential facts, headlines, and core signals.    |
-| Secondary Text   | `--text-secondary` | `oklch(80% 0.01 258)` | AI-summarized insights and factual descriptions. |
-| Muted Text       | `--text-muted`     | `oklch(60% 0.01 258)` | Timestamps, source metadata, and tags.           |
-| Faint text       | `--text-faint`     | `oklch(45% 0.01 258)` | Footnotes and inactive UI elements.              |
-| Brand Accent     | `--accent-primary` | `oklch(75% 0.15 205)` | Primary actions and focused states.              |
-| AI Accent        | `--accent-ai`      | `oklch(60% 0.18 275)` | AI-processed logic and intelligence areas.       |
-| Neutral Status   | `--state-info`     | `oklch(70% 0.05 258)` | Informational data highlights.                   |
+Here's what you need to follow:
 
-Tailwind utility names map to these variables. Use `bg-base`, `bg-surface`, `text-primary`, etc.
+- Always use dark theme.
+- Use black color as application background color.
+- When adding custom colors, make sure to define all shades from 50 to 950 for each color.
+- All colors are defined using the **OKLCH** color space to ensure consistent perceptual lightness and professional aesthetics.
+- Always use semantic colors over raw palette colors, never hardcode/inline raw Tailwind palette colors in components, templates or class names.
+
+Use this brand color as primary color:
+
+```css
+/* app/assets/css/main.css */
+@theme static {
+  --color-brand-50: oklch(97% 0.02 205);
+  --color-brand-100: oklch(92% 0.04 205);
+  --color-brand-200: oklch(87% 0.07 205);
+  --color-brand-300: oklch(82% 0.10 205);
+  --color-brand-400: oklch(78% 0.13 205);
+  --color-brand-500: oklch(75% 0.15 205); // Core brand color
+  --color-brand-600: oklch(65% 0.14 205);
+  --color-brand-700: oklch(52% 0.12 205);
+  --color-brand-800: oklch(40% 0.09 205);
+  --color-brand-900: oklch(28% 0.06 205);
+  --color-brand-950: oklch(18% 0.03 205);
+}
+```
 
 ## Typography
 
@@ -32,16 +41,23 @@ We use NuxtFonts(https://fonts.nuxt.com/) to optimize fonts.
 
 | Role      | Font         | Variable      |
 | --------- | ------------ | ------------- |
-| UI text   | `Geist Sans` | `--font-sans` |
-| Code/mono | `Geist Mono` | `--font-mono` |
+| Text      | `Inter` | `--font-sans` |
 
 ## Border Radius
 
+Nuxt UI exposes CSS variables you can override in `main.css`:
+
+```css
+:root {
+  --ui-radius: 0.375rem; // set default radius to 0.375rem
+}
+```
+
 | Context           | Class         |
 | ----------------- | ------------- |
-| Inline / small UI | `rounded-xl`  |
-| Cards / panels    | `rounded-2xl` |
-| Modals / overlays | `rounded-3xl` |
+| Inline / small UI | `rounded-lg`  |
+| Cards / panels    | `rounded-xl`  |
+| Modals / overlays | `rounded-2xl` |
 
 ## Component Library
 
