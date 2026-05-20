@@ -26,7 +26,7 @@
 
 - Sentiment Stripping: AI-powered removal of sensationalist, biased, and hyperbolic language.
 - Structural Extraction: Automatic identification of key figures, dates, and named entities.
-- Bilingual Fact-Mapping: Preservation of original English factual data alongside its objective Traditional Chinese translation for data integrity.
+- Bilingual Fact-Mapping: Ingestion of original English sources translated to Traditional Chinese via LLM. Both language variants are stored in PostgreSQL for data integrity, while the UI strictly renders the Traditional Chinese content (with no user-facing toggle to English currently).
 - Impact Analysis: Fact-based logical deduction of potential consequences based on objective data.
 
 ### The Signal Feed (UI/UX)
