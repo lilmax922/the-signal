@@ -29,13 +29,13 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
       <div class="hidden lg:flex flex-1 max-w-xl justify-center">
         <div class="relative w-full max-w-md">
           <UInput
-            icon="i-lucide:search"
+            leading-icon="i-lucide:search"
             placeholder="Search"
             size="lg"
             variant="outline"
             class="w-full"
           />
-          <UKbd class="absolute end-2 top-1/2 -translate-y-1/2" size="sm">
+          <UKbd class="absolute inset-e-2 top-1/2 -translate-y-1/2" size="sm">
             <span class="text-xs">⌘K</span>
           </UKbd>
         </div>
@@ -52,7 +52,7 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
 
     <div
       class="lg:hidden overflow-hidden border-t border-default transition-all duration-300 ease-out"
-      :class="isMobileHeaderCollapsed ? 'max-h-0' : 'max-h-[120px]'"
+      :class="isMobileHeaderCollapsed ? 'max-h-0' : 'max-h-30'"
     >
       <div class="px-4 pt-3">
         <div class="relative">
@@ -71,5 +71,8 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
     </div>
   </header>
 
-  <div class="h-16 lg:hidden" />
+  <div
+    class="lg:hidden transition-[height] duration-300 ease-out"
+    :class="isMobileHeaderCollapsed ? 'h-16' : 'h-46'"
+  />
 </template>

@@ -14,8 +14,8 @@ const { isCollapsed } = useScrollCollapse(props.options)
 
 <template>
   <div
-    class="overflow-hidden border-b border-default transition-all duration-300 ease-out"
-    :class="isCollapsed ? 'max-h-0' : `max-h-[${maxHeight}]`"
+    class="overflow-hidden border-b border-default transition-[max-height] duration-300 ease-out"
+    :style="{ maxHeight: isCollapsed ? '0px' : maxHeight }"
   >
     <slot />
   </div>

@@ -52,7 +52,7 @@ Create `app/components/mobile-bottom-navbar.vue`.
 Requirements:
 
 - Only show on mobile view.
-- Items: `Home`, `Favorites`, `Settings`, and use icons from lucide icons for each.
+- Items: `Favorites`, `Home`, `Settings`, and use icons from lucide icons for each.
   - `Home`: `i-lucide:house`
   - `Favorites`: `i-lucide:heart`
   - `Settings`: `i-lucide:settings`

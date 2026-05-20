@@ -1,8 +1,8 @@
 <script setup lang="ts">
 const navItems = [
-  { icon: 'i-lucide:heart' },
-  { icon: 'i-lucide:house' },
-  { icon: 'i-lucide:settings' },
+  { icon: 'i-lucide:heart', label: 'Favorites' },
+  { icon: 'i-lucide:house', label: 'Home' },
+  { icon: 'i-lucide:settings', label: 'Settings' },
 ]
 
 const activeIndex = ref(0)
@@ -17,7 +17,8 @@ const activeIndex = ref(0)
         variant="ghost"
         :color="activeIndex === index ? 'primary' : 'neutral'"
         :icon="item.icon"
-        class="flex-col h-full min-w-[64px] rounded-none items-center justify-center"
+        :aria-label="item.label"
+        class="flex-col h-full min-w-16 rounded-none items-center justify-center"
         @click="activeIndex = index"
       />
     </div>
