@@ -1,18 +1,41 @@
 <script setup lang="ts">
 import { useScrollCollapse } from '~/composables/use-scroll-collapse'
 
-const userMenuItems = [
-  [{
-    label: '收藏',
-    icon: 'i-lucide:bookmark',
-  }, {
-    label: '設定',
-    icon: 'i-lucide:settings',
-  }, {
-    label: '登出',
-    icon: 'i-lucide:log-out',
-  }],
-]
+const user = useSupabaseUser()
+const supabase = useSupabaseClient()
+
+const avatarUrl = computed(() => user.value?.user_metadata?.avatar_url || '')
+const userEmail = computed(() => user.value?.email || '')
+
+const userMenuItems = computed(() => [
+  [
+    {
+      label: userEmail.value || 'User',
+      type: 'label' as const,
+    },
+  ],
+  [
+    {
+      label: '收藏',
+      icon: 'i-lucide:bookmark',
+    },
+    {
+      label: '設定',
+      icon: 'i-lucide:settings',
+    },
+  ],
+  [
+    {
+      label: '登出',
+      icon: 'i-lucide:log-out',
+      color: 'error' as const,
+      onSelect: async () => {
+        await supabase.auth.signOut()
+        navigateTo('/login')
+      },
+    },
+  ],
+])
 
 const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 10, minScrollY: 60 })
 </script>
@@ -41,10 +64,14 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
         </div>
       </div>
 
-      <div class="hidden lg:flex items-center">
+      <div class="flex items-center">
         <UDropdownMenu :items="userMenuItems">
           <UButton variant="ghost" color="neutral">
-            <UAvatar icon="i-lucide:user" size="sm" />
+            <UAvatar
+              :src="avatarUrl"
+              icon="i-lucide:user"
+              size="sm"
+            />
           </UButton>
         </UDropdownMenu>
       </div>

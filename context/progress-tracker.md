@@ -32,6 +32,10 @@
   - Updated `app/layouts/default.vue` to place CategoryFilter at top of main content on desktop
   - CategoryFilter on desktop shows/hides based on scroll direction (scroll down = hide, scroll up = show).
   - Resolved desktop layout bug where CategoryFilter was obscured by the fixed AppHeader: Added `lg:pt-16` to the layout root container as a header spacer, shifted CategoryFilter to `sticky top-16 z-40 bg-black/80 backdrop-blur-md` to align it beneath the header with a frosted glass backdrop, and removed redundant `lg:pt-16` padding from `<main>` to maintain proper document flow and smooth transitions when collapsed.
+- Redesigned login page per `03-auth.md`:
+  - Left panel: Positioned `pl-16` from left edge (comfortable positioning), features with small icons in rounded backgrounds, title and one-line description
+  - Right panel: Centered `UPageCard` with `variant="subtle"`, "The Signal" as title, "Welcome back! Please log in to continue" as description
+  - Mobile: Form only
 
 ## In Progress
 
