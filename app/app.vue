@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 useHead({
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -11,8 +11,8 @@ useHead({
   },
 })
 
-const title = 'Nuxt Starter Template'
-const description = 'A production-ready starter template powered by Nuxt UI. Build beautiful, accessible, and performant applications in minutes, not hours.'
+const title = 'The Signal'
+const description = 'An automated news refinery system designed to strip away emotional bias and hyperbolic language.'
 
 useSeoMeta({
   title,
