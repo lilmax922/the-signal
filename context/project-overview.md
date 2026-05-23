@@ -33,7 +33,7 @@
 - Objective Truth Interface: A minimalist UI using OKLCH colors, strictly excluding emotional indicators.
 - Scan-First Cards: Signal Cards designed for comfortable reading, featuring AI-generated entity tags and a 3-point structured summary.
 - Two-Column Card Stream: A stable, rhythm-based two-column grid on desktop (single column on mobile) for effortless vertical scanning.
-- Master-Detail Layout: A seamless desktop experience that loads the full article in the Intelligence Pane without leaving the feed.
+- Master-Detail Layout: A seamless desktop experience that loads the full article in the Right-side Pane without leaving the feed.
 - Unified Command Palette: A central interface for searching facts and entities across all signals.
 
 ## Scope

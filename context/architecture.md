@@ -96,6 +96,13 @@
 
 8. **Purge**: Delete `signal` rows where `published_at < NOW() - INTERVAL '3 months'`. Cascade removes `signal_tag` rows. Orphaned `tag` rows are cleaned up in the same job.
 
+## Error Handling
+- RSS feed is unavailable
+- Article extraction fails the quality gate
+- LLM call returns invalid JSON
+- Media mirroring fails
+- DB persistence fails
+
 ## Invariants
 
 1. **Non-Blocking Nitro**: Long-running AI tasks and media uploads must never run on the main Nitro thread — always delegate to `trigger/`.

@@ -170,7 +170,7 @@ CREATE INDEX idx_signal_category_published ON signal (category, published_at DES
 CREATE INDEX idx_signal_published_at       ON signal (published_at DESC);
 CREATE INDEX idx_signal_tag_signal_id      ON signal_tag (signal_id);
 CREATE INDEX idx_signal_tag_tag_id         ON signal_tag (tag_id);
-CREATE INDEX idx_tag_name                  ON tag (name);
+CREATE UNIQUE INDEX idx_tag_name                  ON tag (name);
 ```
 
 ---

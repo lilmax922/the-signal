@@ -8,7 +8,7 @@ The design language is **"Objective Minimalist"** — a calm, high-precision tec
 
 ## Colors
 
-We are using NuxtUI default design system, please follow the nuxt-ui skill for instruction to configure it.
+We are using the NuxtUI default design system, please follow the nuxt-ui skill for instruction to configure it.
 
 - Always use dark theme.
 - Use black as the application background color.
@@ -43,8 +43,9 @@ Text must feel effortless to read — never dense, never strained. Spacing, weig
 
 | Role | Font Family | CSS Variable | Purpose |
 | :--- | :--- | :--- | :--- |
-| **Sans-Serif** | `'Inter'`, `'Noto Sans TC'`, `sans-serif` | `--font-sans` | Core readable text, article body, headings, system UI. |
-| **Monospace** | `'JetBrains Mono'`, `'Fira Code'`, `monospace` | `--font-mono` | Numbers, entity tags (`$NVDA`), timestamps, data values. |
+| **Sans-Serif** | Inter, Noto Sans TC, sans-serif | `--font-sans` | Core readable text, article body, headings, system UI. |
+| **Monospace** | JetBrains Mono, Fira Code, monospace | `--font-mono` | Numbers, entity tags (`$NVDA`), timestamps, data values. |
+
 
 ### Font Scale
 
