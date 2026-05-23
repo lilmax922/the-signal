@@ -14,11 +14,10 @@
 ## Core User Flow
 
 1. Authentication: User signs in using Google or GitHub (via Supabase Auth).
-2. Discovery & Exploration: Users browse the "Global Fact Stream" filtered by pre-defined categories (e.g., Tech, World, Science).
-3. Search & Track: Users use the **Semantic Command Palette** to search for specific entities (e.g., "NVIDIA"). From the search results or Signal Cards, users can directly "Follow" AI-generated tags to build their personalized tracking list.
-4. Fact Scanning: Users scan structured Signal Cards in their personalized feed, focusing on core facts and data points without emotional guidance.
-5. Context-Preserving Deep Dive: User taps a card to open a bottom-sheet (Mobile) or side-pane (Desktop) to read the full de-noised content and AI analysis.
-6. Retention: User receives a daily "Morning Pulse" email summarizing the most significant objective shifts in their tracked categories.
+2. Discovery & Exploration: Users browse the Global Signal Feed. The default view shows all categories. Users can filter by a pre-defined category (Tech, World, Science) via the Category Filter Rail.
+3. Search: Users use the **Semantic Command Palette** to search for specific entities or topics (e.g., "NVIDIA").
+4. Fact Scanning: Users scan structured Signal Cards in the feed, focusing on core facts and data points without emotional guidance.
+5. Context-Preserving Deep Dive: User taps a card to open a bottom drawer (Mobile) or right-side pane (Desktop) to read the full de-noised content and AI analysis.
 
 ## Features
 
@@ -26,15 +25,16 @@
 
 - Sentiment Stripping: AI-powered removal of sensationalist, biased, and hyperbolic language.
 - Structural Extraction: Automatic identification of key figures, dates, and named entities.
-- Bilingual Fact-Mapping: Ingestion of original English sources translated to Traditional Chinese via LLM. Both language variants are stored in PostgreSQL for data integrity, while the UI strictly renders the Traditional Chinese content (with no user-facing toggle to English currently).
+- Bilingual Fact-Mapping: Ingestion of original English sources translated to Traditional Chinese via LLM. Both language variants are stored in PostgreSQL for data integrity, while the UI strictly renders the Traditional Chinese content.
 - Impact Analysis: Fact-based logical deduction of potential consequences based on objective data.
 
 ### The Signal Feed (UI/UX)
 
-- Objective Truth Interface: A minimalist UI using OKLCH colors, strictly excluding emotional indicators like Bullish/Bearish.
-- Scan-First Cards: Signal Cards designed for data density, featuring inline AI-generated entity tags for secondary navigation.
-- Master-Detail Layout: A seamless desktop experience that updates details in the "Intelligence Pane" instantly.
-- Unified Command Palette: A central interface for both searching facts and managing personalized tracking tags.
+- Objective Truth Interface: A minimalist UI using OKLCH colors, strictly excluding emotional indicators.
+- Scan-First Cards: Signal Cards designed for comfortable reading, featuring AI-generated entity tags and a 3-point structured summary.
+- Two-Column Card Stream: A stable, rhythm-based two-column grid on desktop (single column on mobile) for effortless vertical scanning.
+- Master-Detail Layout: A seamless desktop experience that loads the full article in the Intelligence Pane without leaving the feed.
+- Unified Command Palette: A central interface for searching facts and entities across all signals.
 
 ## Scope
 
@@ -44,7 +44,7 @@
 - AI Pipeline for de-noising, translation, and structured summarization.
 - Nuxt 4-based full-stack web application with a focus on Mobile-first responsive design.
 - Supabase integration for Auth, PostgreSQL storage, and image hosting.
-- Daily automated email digests via Resend.
+- Automatic purging of signals older than 3 months to maintain database hygiene.
 
 ### Out of Scope
 
@@ -52,12 +52,12 @@
 - Social features (comments, likes, market moods).
 - Manual article creation or community-generated content.
 - Sentiment indicators (Red/Green/Yellow market moods).
+- User-specific features: tag following, saved/bookmarked signals, personalised feeds, email digests.
 
 ## Success Criteria
 
-1. A signed-in user can follow/unfollow an AI-generated entity (e.g., $NVDA), and see their personalized feed update in the next session.
+1. User can browse and filter the Signal Feed by category without a full page refresh.
 2. The AI successfully reduces raw article word counts by at least 50% while retaining all critical objective data.
-3. User can understand the core signal of the article in 15 seconds.
-4. AI Analysis must be based on facts and macro trends, and strictly prohibit false fantasies or emotional language.
-5. Users can toggle between categories and have the feed update instantly without full page refreshes.
-6. A user can subscribe to a daily digest email with the most significant objective shifts in their tracked categories.
+3. User can understand the core signal of an article within 15 seconds.
+4. AI output must be strictly factual — no fabricated data, no emotional language.
+5. Signals older than 3 months are automatically purged from the database.

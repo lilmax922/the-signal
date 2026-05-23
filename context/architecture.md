@@ -2,72 +2,106 @@
 
 ## Stack
 
-| Layer           | Technology                         | Role                                                                                                                                         |
-| --------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Framework       | Nuxt.js 4 + TypeScript             | Full-stack app with client/server boundaries.                                                                                                |
-| UI              | TailwindCSS + NuxtUI               | Component composition and styling.                                                                                                           |
-| Auth            | Supabase Auth                      | Handles Google & GitHub OAuth integration and manages user sessions and identity.                                                            |
-| Database        | Drizzle ORM + Supabase(PostgreSQL) | Primary structured storage using Drizzle ORM for type-safe data operations (Signals, Tags, Profiles).                                       |
-| Storage         | Supabase Storage                   | Stores mirrored news thumbnail images. Yahoo CDN URLs are never stored directly due to expiry and hotlink restrictions.                      |
-| AI Pipeline     | Trigger.dev + OpenRouter           | Trigger.dev: Long-running background jobs (AI De-noising, Translation, Tagging, Media Mirroring, DB persistence). OpenRouter: Access to LLMs (e.g., Gemma 9B) for factual extraction. |
-| Scheduler       | Nitro Scheduled Tasks              | Triggers the RSS ingestion pipeline at 08:00 and 20:00 daily. Handles lightweight I/O: RSS fetch, deduplication check, and article extraction before handing off to Trigger.dev. |
-| Email           | Resend                             | Transactional email service for the "Morning Pulse" personalized digest.                                                                     |
-| Package Manager | pnpm                               | Package manager for the project.                                                                                                             |
+| Layer   | Technology   | Role   |
+| --- | --- | --- |
+| Framework       | Nuxt.js 4 + TypeScript                  | Full-stack app with client/server boundaries.                                                                                                           |
+| UI              | TailwindCSS + NuxtUI                    | Component composition and styling.                                                                                                                      |
+| Auth            | @nuxtjs/supabase + Supabase Auth        | Google & GitHub OAuth. Provides `useSupabaseUser()` / `useSupabaseClient()` on the client and `serverSupabaseClient()` / `serverSupabaseUser()` on the server. No custom user or profile table needed. |
+| Database        | Drizzle ORM + Supabase (PostgreSQL)     | Type-safe data operations via Drizzle. Connects directly with the service role key — bypasses Supabase RLS entirely. All access control is enforced in the Nitro server layer. |
+| Storage         | Supabase Storage                        | Stores mirrored news preview images. Third-party CDN URLs (e.g. Yahoo) are never stored in the DB.                                                    |
+| AI Pipeline     | Trigger.dev + OpenRouter                | Trigger.dev: long-running background jobs (de-noising, translation, tagging, media mirroring, DB persistence). OpenRouter: LLM access (e.g. Gemma 9B). |
+| Scheduler       | Nitro Scheduled Tasks                   | RSS ingestion at 08:00 and 20:00 daily. Monthly data purge on the 1st of each month. Lightweight I/O only — all heavy work is delegated to Trigger.dev. |
+| Package Manager | pnpm                                    | Package manager for the project.|
+
+## Directory Structure (Nuxt 4)
+
+```
+/
+├── app/                        # Client-side (Nuxt 4 app/ directory)
+│   ├── components/
+│   │   ├── signal/             # Signal feed components
+│   │   └── app/                # Reusable app-wide components (buttons, inputs, etc.)
+│   ├── composables/            # Client-side Vue composables
+│   ├── layouts/
+│   ├── pages/
+│   └── assets/
+│       └── css/
+│           └── main.css        # OKLCH tokens, Tailwind config
+├── server/                     # Nitro backend
+│   ├── api/
+│   │   └── signals/            # GET /api/signals, GET /api/signals/[id], GET /api/signals/search
+│   ├── tasks/                  # Nitro scheduled tasks
+│   │   ├── rss-ingest.ts       # 08:00 and 20:00 daily
+│   │   └── purge-old.ts        # 1st of each month
+│   ├── middleware/             # Auth session middleware
+│   └── utils/                  # Server-only helpers
+├── trigger/                    # Trigger.dev background jobs
+│   └── refinery.ts             # AI de-noise + translate + tag + media mirror + persist
+├── lib/                        # Shared libraries
+│   ├── db/
+│   │   ├── index.ts            # Drizzle client (service role connection)
+│   │   └── schema/             # Drizzle table definitions
+│   │   └── migrations/         # Drizzle migrations
+│   │   └── queries/            # Drizzle queries
+│   └── validators/             # Zod schemas
+├── shared/                     # Code shared between app/ and server/
+│   ├── types/                  # TypeScript interfaces (signal.ts, tag.ts, etc.)
+│   └── constants/              # Shared constants (categories, limits, etc.)
+├── public/
+└── nuxt.config.ts
+```
 
 ## System Boundaries
 
-- `app/` — Presentation Layer: Client-side Nuxt 4 directory containing pages, components, and composables. Uses useState for lightweight state management.
-- `lib/` — Shared Infrastructure: Drizzle schemas, database client initialization.
-- `shared/` — Contains the shared code that can be used in both the Vue app and the Nitro server such as constants, types.
-- `server/` — Nitro Backend: Handles API routes, server-side permission checks, 3rd-party integrations (Resend), and scheduled ingestion tasks. Follows the "Thin API" pattern.
-- `trigger/` — Intelligence Refinery: Off-main-thread background refinery. Responsible for AI de-noising, fact translation, tag pre-generation, media mirroring, and DB persistence.
+- `app/` — Presentation Layer: Client-side Vue pages, components, and composables. Uses `useSupabaseUser()` for auth state. Never accesses the DB directly.
+- `lib/db/` — DB client and Drizzle schema. Imported only by `server/` and `trigger/` — never by `app/`.
+- `lib/validators/` — Zod schemas used at all API and pipeline boundaries.
+- `shared/` — Types and constants safe to import from both client and server.
+- `server/` — Nitro layer: API routes, scheduled tasks, auth middleware. Sole owner of data access logic. Uses `serverSupabaseUser()` to verify sessions; uses Drizzle for all DB reads/writes.
+- `trigger/` — Intelligence Refinery: off-main-thread jobs. Handles all AI processing and DB writes for the pipeline. Never called from `app/`.
+
+## Auth Model
+
+- **Client**: `useSupabaseUser()` exposes the current user. Avatar and display name are read from `user.user_metadata` (populated by OAuth provider). No custom profile table exists.
+- **Server**: Every API route calls `serverSupabaseUser(event)` to retrieve the authenticated user. Unauthenticated requests are rejected with 401 before any DB access.
+- **No RLS**: Drizzle uses the Postgres service role key and bypasses RLS entirely. The Nitro server layer is solely responsible for enforcing access control.
 
 ## Storage Model
 
 - **Database (PostgreSQL)**:
-  - Metadata: Stores bilingual signal content, AI-generated tags, and source metadata.
-  - Relationships: Manages user-to-tag "Tracked Interests" and "Saved Signals" mappings.
-  - Task Records: Logs Trigger.dev run states and `fact_hash` for deduplication.
+  - `signal` — bilingual article content, AI-generated summary, source metadata, image URL reference.
+  - `tag` — normalised entity tag registry.
+  - `signal_tag` — junction table linking signals to their tags (max 3 per signal).
+  - No user-specific tables exist.
 - **Supabase Storage**:
-  - Media Blobs: Stores mirrored image files (news thumbnails downloaded from source during pipeline execution).
-  - References: Only the Supabase public URLs are stored in the PostgreSQL signals table. Original third-party CDN URLs are never persisted.
-
-## Auth and Access Model
-
-- Identity: Every user is identified by a unique UUID issued via Supabase Auth.
-- Access Control:
-  - Public: Global Fact Stream is readable by all users.
-  - Private: Personal collections and interest settings are strictly isolated.
-- Data Security: Implements PostgreSQL Row Level Security (RLS) to enforce data isolation at the database level.
+  - Images are downloaded during pipeline execution and re-hosted here.
+  - Only the Supabase public URL is stored in `signal.image_url`.
 
 ## AI Pre-generation Workflow (The "Refinery" Pipeline)
 
-To ensure high-speed consumption, all content is processed before reaching the user. The pipeline is split into two execution contexts:
+### Stage 1 — Nitro Scheduled Task (08:00 and 20:00 daily)
 
-### Stage 1 — Nitro Scheduled Task (Lightweight I/O)
-Runs at **08:00 and 20:00 daily** via `nuxt.config.ts` scheduled tasks.
+1. **RSS Ingestion**: Fetch Yahoo News RSS (`/news/tech`, `/news/world`, `/news/science`).
+2. **Deduplication**: Compute `fact_hash` (SHA-256 of URL + title). Query DB — skip existing hashes.
+3. **Article Extraction**: `@extractus/article-extractor` per URL. Quality gate: skip if extracted text < 200 characters.
+4. **Hand-off**: Trigger a Trigger.dev job with the validated article batch.
 
-1. **RSS Ingestion**: Fetch Yahoo News RSS feeds (`/news/tech`, `/news/world`, `/news/science`) and collect article metadata.
-2. **Deduplication**: Compute `fact_hash` from article URL + title. Query Supabase — skip any article whose hash already exists.
-3. **Article Extraction**: Use `@extractus/article-extractor` to fetch full article body from each URL.
-   - Content quality gate: discard any article with fewer than 200 extracted characters.
-4. **Hand-off**: Trigger a Trigger.dev background job, passing the validated article batch as payload.
+### Stage 2 — Trigger.dev Background Job (per article)
 
-### Stage 2 — Trigger.dev Background Job (Heavy Processing)
-Executes off the main Nitro thread for each validated article.
+5. **Single LLM Call (OpenRouter)**: One prompt performs: de-noising, Traditional Chinese translation, entity tag extraction (max 3), 3-point summary. Output: validated JSON via Zod.
+6. **Media Mirroring**: Download image → upload to Supabase Storage → obtain public URL.
+7. **Persistence**: Write `signal` row + upsert `tag` rows + write `signal_tag` rows.
 
-5. **Single LLM Call (OpenRouter)**: Send one combined prompt per article to perform:
-   - De-noising: Strip emotional bias, hyperbolic language, and clickbait phrasing.
-   - Translation: Render the cleaned content into Traditional Chinese.
-   - Tag extraction: Identify named entities (companies, people, tickers) and map them to tags.
-   - Output: Structured JSON containing both `en` and `zh_tw` content variants plus a tags array.
-6. **Media Mirroring**: Download the article's thumbnail image and upload it to Supabase Storage. Obtain a stable public URL.
-7. **Persistence**: Write the final Signal Card object to the database (`signals` table + `tags` table).
+### Stage 3 — Nitro Scheduled Task (1st of each month)
+
+8. **Purge**: Delete `signal` rows where `published_at < NOW() - INTERVAL '3 months'`. Cascade removes `signal_tag` rows. Orphaned `tag` rows are cleaned up in the same job.
 
 ## Invariants
 
-1. **Non-Blocking Nitro**: Long-running AI tasks and media uploads must never run on the main Nitro thread; always delegate to `trigger/`.
-2. **Unique Fact Rule**: Every signal must have a unique `fact_hash` (derived from URL + title) to prevent duplicate processing. Deduplication must occur before any AI call is made.
-3. **No Third-Party CDN URLs**: Thumbnail images must always be mirrored to Supabase Storage. Yahoo CDN URLs must never be stored in the database due to URL expiry and hotlink blocking.
-4. **Single LLM Call per Article**: De-noising, translation, and tag extraction must be batched into one OpenRouter request to minimise API quota consumption.
-5. **Design Compliance**: All UI components must strictly utilise the OKLCH variables defined in `/context/ui-context.md`.
+1. **Non-Blocking Nitro**: Long-running AI tasks and media uploads must never run on the main Nitro thread — always delegate to `trigger/`.
+2. **Unique Fact Rule**: `fact_hash` deduplication must occur before any AI call is made.
+3. **No Third-Party CDN URLs**: Images must always be mirrored to Supabase Storage. Yahoo CDN URLs must never be stored in the DB.
+4. **Single LLM Call per Article**: De-noising, translation, tag extraction, and summary must be batched into one OpenRouter request.
+5. **No User-Specific Storage**: No profile, saved signals, tracked tags, or email digest tables exist. User identity is provided entirely by `@nuxtjs/supabase`.
+6. **Server-Enforced Access Control**: Because RLS is disabled, every Nitro API route must verify session via `serverSupabaseUser()` before executing any DB query.
+7. **Design Compliance**: All UI components must use the OKLCH tokens and spacing conventions in `ui-context.md`.
