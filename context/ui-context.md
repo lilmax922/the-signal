@@ -8,7 +8,7 @@ The design language is **"Objective Minimalist"** — a calm, high-precision tec
 
 ## Colors
 
-We are using the NuxtUI default design system, please follow the nuxt-ui skill for instruction to configure it.
+We are using NuxtUI default design system, please follow the nuxt-ui skill for instruction to configure it.
 
 - Always use dark theme.
 - Use black as the application background color.
@@ -96,7 +96,8 @@ A data terminal must never feel cramped. Generous spacing is a non-negotiable re
 | Page horizontal margin (mobile) | `16px` | `px-4` |
 | Page horizontal margin (desktop) | `32px–48px` | `px-8` to `px-12` |
 | Feed card vertical spacing | `16px` | `space-y-4` |
-| Pane internal padding | `32px` | `p-8` |
+| Right-Side Pane internal padding | `32px` | `p-8` |
+| Bottom Drawer internal padding | `24px` horizontal / `32px` vertical | `px-6 py-8` |
 
 ---
 
@@ -128,7 +129,7 @@ A data terminal must never feel cramped. Generous spacing is a non-negotiable re
 
 ### Signal Feed: Two-Column Card Stream
 
-The primary feed layout is a **two-column card grid on desktop, single column on mobile**. This replaces the Bento Grid. The two-column layout provides a stable, predictable visual rhythm — the eye moves in a straight vertical path down each column without needing to re-orient for differently-sized blocks.
+The primary feed layout is a **two-column card grid on desktop, single column on mobile**. This provides a stable, predictable visual rhythm — the eye moves in a straight vertical path without needing to re-orient for differently-sized blocks.
 
 ```
 Desktop (≥ 768px)               Mobile (< 768px)
@@ -138,27 +139,23 @@ Desktop (≥ 768px)               Mobile (< 768px)
 │  Summary   │ │  Summary   │   │  Summary          │
 │  Tags Time │ │  Tags Time │   │  Tags        Time │
 └────────────┘ └────────────┘   └──────────────────┘
-┌────────────┐ ┌────────────┐   ┌──────────────────┐
-│  [Image]   │ │  [Image]   │   │     [Image]       │
-│  ...       │ │  ...       │   │  ...              │
-└────────────┘ └────────────┘   └──────────────────┘
 ```
 
 **Card anatomy (top to bottom):**
 1. Image — `aspect-video`, full card width, `rounded-t-2xl`, no cropping distortion.
-2. Category badge + timestamp — `text-xs font-mono`, `gap-2` between items.
+2. Category badge + timestamp — `text-xs font-mono`, `gap-2`.
 3. Title — `text-xl font-medium`, `leading-relaxed`.
 4. 3-point summary list — `text-sm font-light leading-relaxed`, `space-y-2` between bullets.
-5. Entity tag chips — monospace, uppercase, `text-xs`, separated from content by `mt-4`.
+5. Entity tag chips — monospace, uppercase, `text-xs`, separated by `mt-4`.
 
-Cards use `rounded-2xl` with a subtle variant one step lighter than the page background.
+Cards use `rounded-2xl` with a subtle variant.
 
 ### Mobile Layout
 
 - **Header**: Fixed top container with the application name permanently centered.
   - **Scroll-Down**: Conceals the search input and Category Filter Rail to maximise reading space.
-  - **Scroll-Up**: Reveals the search input and Category Filter Rail.
-  - Hysteresis threshold: controls only toggle after sustained scroll direction to prevent accidental layout shifts.
+  - **Scroll-Up**: Reveals the search input, notification icon, and Category Filter Rail.
+  - Hysteresis threshold: controls only toggle after sustained scroll direction.
 - **Category Filter Rail**: Horizontal scroll tab rail inside the header. Tabs: All / Tech / World / Science.
 - **Feed**: Single-column card list with `space-y-4` between cards and `px-4` page margin.
 - **Bottom Navigation**: Low-profile persistent footer for switching between primary views.
@@ -167,27 +164,44 @@ Cards use `rounded-2xl` with a subtle variant one step lighter than the page bac
 
 - **Header**: Fixed full-width top bar. Application title anchored left, centered search input with `⌘K` hint, user avatar anchored right.
 - **Category Filter Rail**: Pinned to the top of the content workspace, always visible above the feed.
-- **Two-Column Feed**: `grid grid-cols-2 gap-6` with `max-w-7xl mx-auto` and `px-8`–`px-12` page margin. No card ever stretches to an unreadable width.
-- **Right-side Pane**: Opens when a card is selected, displaying the full de-noised content without navigating away. Has `p-8` internal padding and a subtle left border separating it from the feed. When the pane is open, the feed column narrows; the two-column grid collapses to a single column to give the pane adequate width.
+- **Two-Column Feed**: `grid grid-cols-2 gap-6` with `max-w-7xl mx-auto` and `px-8`–`px-12` page margin.
+- **Intelligence Pane**: Right-side panel that opens when a card is selected. The feed narrows to a single column to accommodate it. Has `p-8` internal padding and a subtle left border. Closing the pane restores the two-column grid.
 
 ---
 
 ## Interaction Principles
 
-### Desktop: Right-side Pane
-- Clicking a card opens the Right-side Pane. The feed reflows to a single column to accommodate it.
-- The pane renders the full Traditional Chinese content, source link, entity tags, and publish metadata.
-- Clicking elsewhere or pressing `Esc` closes the pane and restores the two-column grid.
+### Opening Signal Detail
+
+- Clicking a card triggers `router.push('/signal/[slug]')`. This updates the URL without a full page reload.
+- The appropriate detail component opens based on current viewport:
+  - **Mobile** (`< 768px`): Bottom Drawer slides up to 90% viewport height.
+  - **Desktop** (`≥ 768px`): Intelligence Pane opens on the right, feed narrows to single column.
+
+### Direct Navigation & Shared Links
+
+- Navigating directly to `/signal/[slug]` (e.g. from a shared URL) renders the feed page in the background and immediately opens the signal detail using the same viewport-aware logic.
+- This is handled by `app/pages/signal/[slug].vue`, which on mount fetches the signal by slug via `GET /api/signals/[slug]` and opens the correct detail component.
+- If the slug does not exist, the page renders a 404 state without breaking the feed layout.
+
+### Closing Signal Detail
+
+- Closing the drawer or pane triggers `router.push('/')`.
+- The feed restores scroll position to where it was before the detail was opened.
+
+### Desktop: Right-Side Pane
+- Clicking elsewhere in the feed or pressing `Esc` closes the pane.
+- The expanded state is reflected in the URL (`/signal/[slug]`); closing returns to `/`.
 
 ### Mobile: Bottom Drawer
-- Tapping a card slides a drawer upward to 90% viewport height (`rounded-3xl` top corners).
-- Drawer has `px-6 py-8` internal padding.
-- Dismissed via downward swipe; returns to exact scroll position.
+- Drawer content has `px-6 py-8` internal padding.
+- Dismissed via downward swipe or a close button; returns to exact feed scroll position.
 
 ### Command Palette
 - Triggered by the search input or `⌘K`.
 - Searches signal titles, content, and entity tag names.
 - Results render as a compact list of Signal Card previews within the palette overlay.
+- Selecting a result navigates to `/signal/[slug]`.
 
 ### Avatar Dropdown (Desktop)
 - Clicking the avatar shows a dropdown with two items: **Settings** and **Logout**.

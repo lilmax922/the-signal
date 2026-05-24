@@ -20,22 +20,23 @@ No custom user or profile table exists. User identity is managed exclusively by 
 
 The core content table. Each row is one fully-processed Signal Card.
 
-| Column            | Type          | Constraints                                     | Description                                                            |
-| ----------------- | ------------- | ----------------------------------------------- | ---------------------------------------------------------------------- |
-| `id`              | `uuid`        | PK, default `gen_random_uuid()`                 | Unique signal identifier.                                              |
-| `fact_hash`       | `text`        | UNIQUE, NOT NULL                                | SHA-256 of (`source_url` + `title_en`). Deduplication key.            |
-| `category`        | `text`        | NOT NULL, CHECK IN (`tech`, `world`, `science`) | Derived from the source RSS feed path.                                 |
-| `title_en`        | `text`        | NOT NULL                                        | Original English headline from RSS metadata.                           |
-| `title_zh`        | `text`        | NOT NULL                                        | De-noised Traditional Chinese headline.                                |
-| `content_en`      | `text`        | NOT NULL                                        | De-noised English body. Retained for potential re-processing.          |
-| `content_zh`      | `text`        | NOT NULL                                        | Translated Traditional Chinese body. Rendered in the UI.               |
-| `summary_zh`      | `text[]`      | NOT NULL                                        | Exactly 3 Traditional Chinese bullet-point summary items.              |
-| `image_url`   | `text`        | nullable                                        | Supabase Storage public URL for the mirrored image.            |
-| `image_alt`   | `text`        | nullable                                        | Alt text for the preview image.                                        |
-| `source_url`      | `text`        | NOT NULL                                        | Original article URL.                                                  |
-| `published_at`    | `timestamptz` | NOT NULL                                        | Publication timestamp from RSS.                                        |
-| `created_at`      | `timestamptz` | default `now()`                                 | Row creation timestamp.                                                |
-| `pipeline_run_id` | `text`        | nullable                                        | Trigger.dev run ID for traceability.                                   |
+| Column            | Type          | Constraints                                     | Description                                                              |
+| ----------------- | ------------- | ----------------------------------------------- | ------------------------------------------------------------------------ |
+| `id`              | `uuid`        | PK, default `gen_random_uuid()`                 | Unique internal identifier.                                              |
+| `slug`            | `text`        | UNIQUE, NOT NULL                                | URL-safe identifier. Format: `{slugified-title-en}-{YYYY-MM-DD}`. Used in all public-facing routes. |
+| `hash`            | `text`        | UNIQUE, NOT NULL                                | SHA-256 of (`source_url` + `title_en`). Pipeline deduplication key only — never exposed in URLs. |
+| `category`        | `text`        | NOT NULL, CHECK IN (`tech`, `world`, `science`) | Derived from the source RSS feed path.                                   |
+| `title_en`        | `text`        | NOT NULL                                        | Original English headline from RSS metadata.                             |
+| `title_zh`        | `text`        | NOT NULL                                        | De-noised Traditional Chinese headline.                                  |
+| `content_en`      | `text`        | NOT NULL                                        | De-noised English body. Retained for potential re-processing.            |
+| `content_zh`      | `text`        | NOT NULL                                        | Translated Traditional Chinese body. Rendered in the UI.                 |
+| `summary_zh`      | `text[]`      | NOT NULL                                        | Exactly 3 Traditional Chinese bullet-point summary items.                |
+| `image_url`       | `text`        | nullable                                        | Supabase Storage public URL for the mirrored image.                      |
+| `image_alt`       | `text`        | nullable                                        | Alt text for the preview image.                                          |
+| `source_url`      | `text`        | NOT NULL                                        | Original article URL.                                                    |
+| `published_at`    | `timestamptz` | NOT NULL                                        | Publication timestamp from RSS.                                          |
+| `created_at`      | `timestamptz` | default `now()`                                 | Row creation timestamp.                                                  |
+| `pipeline_run_id` | `text`        | nullable                                        | Trigger.dev run ID for traceability.                                     |
 
 ---
 
@@ -43,11 +44,11 @@ The core content table. Each row is one fully-processed Signal Card.
 
 Normalised entity tag registry. One canonical row per entity.
 
-| Column       | Type          | Constraints                     | Description                                               |
-| ------------ | ------------- | ------------------------------- | --------------------------------------------------------- |
-| `id`         | `uuid`        | PK, default `gen_random_uuid()` | Unique tag identifier.                                    |
-| `name`       | `text`        | UNIQUE, NOT NULL                | Canonical label (e.g. `NVIDIA`, `OpenAI`, `$TSLA`).      |
-| `created_at` | `timestamptz` | default `now()`                 | Row creation timestamp.                                   |
+| Column       | Type          | Constraints                     | Description                                          |
+| ------------ | ------------- | ------------------------------- | ---------------------------------------------------- |
+| `id`         | `uuid`        | PK, default `gen_random_uuid()` | Unique tag identifier.                               |
+| `name`       | `text`        | UNIQUE, NOT NULL                | Canonical label (e.g. `NVIDIA`, `OpenAI`, `$TSLA`). |
+| `created_at` | `timestamptz` | default `now()`                 | Row creation timestamp.                              |
 
 ---
 
@@ -55,11 +56,11 @@ Normalised entity tag registry. One canonical row per entity.
 
 Junction table. Max 3 tags per signal — enforced at the pipeline layer before insert.
 
-| Column      | Type   | Constraints                                      | Description            |
-| ----------- | ------ | ------------------------------------------------ | ---------------------- |
-| `signal_id` | `uuid` | FK → `signal(id)` ON DELETE CASCADE              | —                      |
-| `tag_id`    | `uuid` | FK → `tag(id)` ON DELETE CASCADE                 | —                      |
-| PRIMARY KEY | —      | (`signal_id`, `tag_id`)                          | Composite PK.          |
+| Column      | Type   | Constraints                          | Description   |
+| ----------- | ------ | ------------------------------------ | ------------- |
+| `signal_id` | `uuid` | FK → `signal(id)` ON DELETE CASCADE  | —             |
+| `tag_id`    | `uuid` | FK → `tag(id)` ON DELETE CASCADE     | —             |
+| PRIMARY KEY | —      | (`signal_id`, `tag_id`)              | Composite PK. |
 
 ---
 
@@ -73,48 +74,89 @@ No user-owned tables. `auth.users` is not referenced by any application table.
 
 ---
 
-## Drizzle Schema (lib/db/schema/*.ts)
+## Slug Generation Rules
+
+Slugs are generated during Trigger.dev Stage 2, before DB persistence.
+
+1. Slugify `title_en`: lowercase, replace spaces and special characters with `-`, strip non-alphanumeric characters.
+2. Append `-{YYYY-MM-DD}` from `published_at`.
+3. Query DB for existing slug. If unique → use it.
+4. If collision → append `-2`, `-3`, up to `-10`.
+5. If still colliding after 10 attempts → log and discard the article.
+
+Example: `nvidia-announces-blackwell-ultra-gpu-2026-05-22`
+
+---
+
+## Drizzle Schema (`server/database/schema/`)
+
+Each table lives in its own file. `server/database/schema/index.ts` re-exports all tables.
 
 ```ts
-import { pgTable, uuid, text, timestamp, primaryKey, check } from 'drizzle-orm/pg-core'
+// server/database/schema/signal.ts
+import { pgTable, uuid, text, timestamp, index, check } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
 export const signal = pgTable('signal', {
-  id:            uuid('id').primaryKey().defaultRandom(),
-  factHash:      text('fact_hash').notNull().unique(),
-  category:      text('category').notNull(),
-  titleEn:       text('title_en').notNull(),
-  titleZh:       text('title_zh').notNull(),
-  contentEn:     text('content_en').notNull(),
-  contentZh:     text('content_zh').notNull(),
-  summaryZh:     text('summary_zh').array().notNull(),
-  imageUrl:  text('image_url'),
-  imageAlt:  text('image_alt'),
-  sourceUrl:     text('source_url').notNull(),
-  publishedAt:   timestamp('published_at', { withTimezone: true }).notNull(),
-  createdAt:     timestamp('created_at', { withTimezone: true }).defaultNow(),
-  pipelineRunId: text('pipeline_run_id'),
-}, table => [
-  check('category_check', sql`${table.category} IN ('tech', 'world', 'science')`),
+  id:            uuid().primaryKey().defaultRandom(),
+  slug:          text().notNull().unique(),
+  hash:          text().notNull().unique(),
+  category:      text().notNull(),
+  titleEn:       text().notNull(),
+  titleZh:       text().notNull(),
+  contentEn:     text().notNull(),
+  contentZh:     text().notNull(),
+  summaryZh:     text().array().notNull(),
+  imageUrl:      text(),
+  imageAlt:      text(),
+  sourceUrl:     text().notNull(),
+  publishedAt:   timestamp({ withTimezone: true }).notNull(),
+  createdAt:     timestamp({ withTimezone: true }).defaultNow(),
+  pipelineRunId: text(),
+}, t => [
+  index('idx_signal_category_published').on(t.category, t.publishedAt.desc()),
+  index('idx_signal_published_at').on(t.publishedAt.desc()),
+  check('signal_category_check', sql`${t.category} IN ('tech', 'world', 'science')`),
 ])
+```
+
+```ts
+// server/database/schema/tag.ts
+import { pgTable, uuid, text, timestamp } from 'drizzle-orm/pg-core'
 
 export const tag = pgTable('tag', {
-  id:        uuid('id').primaryKey().defaultRandom(),
-  name:      text('name').notNull().unique(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  id:        uuid().primaryKey().defaultRandom(),
+  name:      text().notNull().unique(),
+  createdAt: timestamp({ withTimezone: true }).defaultNow(),
 })
+```
+
+```ts
+// server/database/schema/signal-tag.ts
+import { pgTable, uuid, index, primaryKey } from 'drizzle-orm/pg-core'
+import { signal } from './signal'
+import { tag } from './tag'
 
 export const signalTag = pgTable('signal_tag', {
-  signalId: uuid('signal_id').notNull().references(() => signal.id, { onDelete: 'cascade' }),
-  tagId:    uuid('tag_id').notNull().references(() => tag.id, { onDelete: 'cascade' }),
-}, table => [
-  primaryKey({ columns: [table.signalId, table.tagId] }),
+  signalId: uuid().notNull().references(() => signal.id, { onDelete: 'cascade' }),
+  tagId:    uuid().notNull().references(() => tag.id, { onDelete: 'cascade' }),
+}, t => [
+  index('idx_signal_tag_signal_id').on(t.signalId),
+  index('idx_signal_tag_tag_id').on(t.tagId),
+  primaryKey({ columns: [t.signalId, t.tagId] }),
 ])
+```
+
+```ts
+// server/database/schema/index.ts
+export * from './signal'
+export * from './tag'
+export * from './signal-tag'
 ```
 
 ---
 
-## Zod Validators (lib/validators/signal.ts)
+## Zod Validators (`shared/validators/signal.ts`)
 
 ```ts
 import { z } from 'zod'
@@ -122,23 +164,24 @@ import { z } from 'zod'
 export const categorySchema = z.enum(['tech', 'world', 'science'])
 
 export const signalSchema = z.object({
-  id:           z.string().uuid(),
-  factHash:     z.string(),
-  category:     categorySchema,
-  titleEn:      z.string().min(1),
-  titleZh:      z.string().min(1),
-  contentEn:    z.string().min(1),
-  contentZh:    z.string().min(1),
-  summaryZh:    z.array(z.string().min(1)).length(3),
-  imageUrl: z.string().url().nullable(),
-  imageAlt: z.string().nullable(),
-  sourceUrl:    z.string().url(),
-  publishedAt:  z.string().datetime(),
-  createdAt:    z.string().datetime().nullable(),
+  id:            z.string().uuid(),
+  slug:          z.string().min(1),
+  hash:          z.string(),
+  category:      categorySchema,
+  titleEn:       z.string().min(1),
+  titleZh:       z.string().min(1),
+  contentEn:     z.string().min(1),
+  contentZh:     z.string().min(1),
+  summaryZh:     z.array(z.string().min(1)).length(3),
+  imageUrl:      z.string().url().nullable(),
+  imageAlt:      z.string().nullable(),
+  sourceUrl:     z.string().url(),
+  publishedAt:   z.string().datetime(),
+  createdAt:     z.string().datetime().nullable(),
   pipelineRunId: z.string().nullable(),
 })
 
-// For the LLM output shape coming back from OpenRouter
+// LLM output shape from OpenRouter
 export const llmOutputSchema = z.object({
   titleZh:   z.string().min(1),
   contentEn: z.string().min(1),
@@ -147,13 +190,14 @@ export const llmOutputSchema = z.object({
   tags:      z.array(z.string().min(1)).max(3),
 })
 
-// API query params
+// API query params — feed list
 export const signalQuerySchema = z.object({
   category: categorySchema.optional(),
   cursor:   z.string().uuid().optional(),
   limit:    z.coerce.number().int().min(1).max(50).default(20),
 })
 
+// API query params — search
 export const signalSearchSchema = z.object({
   q:     z.string().min(1).max(200),
   limit: z.coerce.number().int().min(1).max(20).default(10),
@@ -165,12 +209,10 @@ export const signalSearchSchema = z.object({
 ## Indexes
 
 ```sql
-CREATE UNIQUE INDEX idx_signal_fact_hash   ON signal (fact_hash);
-CREATE INDEX idx_signal_category_published ON signal (category, published_at DESC);
-CREATE INDEX idx_signal_published_at       ON signal (published_at DESC);
-CREATE INDEX idx_signal_tag_signal_id      ON signal_tag (signal_id);
-CREATE INDEX idx_signal_tag_tag_id         ON signal_tag (tag_id);
-CREATE UNIQUE INDEX idx_tag_name                  ON tag (name);
+CREATE INDEX        idx_signal_category_published ON signal (category, published_at DESC);
+CREATE INDEX        idx_signal_published_at     ON signal (published_at DESC);
+CREATE INDEX        idx_signal_tag_signal_id    ON signal_tag (signal_id);
+CREATE INDEX        idx_signal_tag_tag_id       ON signal_tag (tag_id);
 ```
 
 ---
@@ -180,7 +222,7 @@ CREATE UNIQUE INDEX idx_tag_name                  ON tag (name);
 ```sql
 -- Executed by server/tasks/purge-old.ts on the 1st of each month
 DELETE FROM signal WHERE published_at < NOW() - INTERVAL '3 months';
--- signal_tag rows cascade automatically.
--- Orphaned tag rows cleaned up in the same job via:
+-- signal_tag rows cascade automatically via ON DELETE CASCADE.
+-- Orphaned tag rows cleaned up in the same job:
 DELETE FROM tag WHERE id NOT IN (SELECT DISTINCT tag_id FROM signal_tag);
 ```

@@ -32,7 +32,7 @@ When implementing a feature, resolve ambiguity in this priority order:
 
 1. `architecture.md` — system boundaries and invariants are the highest authority.
 2. `database-schema.md` — source of truth for all table and column names, Drizzle schema, and Zod validators.
-3. `code-standards.md` — governs how all code is written (naming, validation, auth pattern).
+3. `code-standards.md` — governs how all code is written (naming, validation, auth pattern, routing).
 4. `ui-context.md` — governs how UI is built and styled.
 5. `project-overview.md` — product intent; consult when behavior is ambiguous.
 
@@ -50,15 +50,18 @@ Update the relevant context file whenever implementation changes affect:
 - System architecture or directory boundaries
 - Storage model decisions
 - Naming conventions or code standards
+- Routing or URL structure
 - Feature scope (in scope / out of scope)
 
 ## Key Constraints to Enforce on Every Task
 
-- No RLS: every API route must call `serverSupabaseUser(event)` before any DB access.
-- No direct DB access from `app/` — only `server/` and `trigger/` import from `lib/db/`.
-- No third-party CDN URLs stored in the DB — images must be mirrored to Supabase Storage.
-- Zod validation at every external boundary — API inputs, LLM outputs, RSS payloads.
-- Naming: singular table names, `snake_case` columns, `camelCase` TS variables, `kebab-case` files.
+- **No RLS**: every API route must call `serverSupabaseUser(event)` before any DB access.
+- **No direct DB access from `app/`**: only `server/` and `trigger/` import from `server/database/`.
+- **No third-party CDN URLs in DB**: images must be mirrored to Supabase Storage.
+- **Zod validation at every external boundary**: API inputs, LLM outputs, RSS payloads.
+- **Naming**: singular table names, `snake_case` columns, `camelCase` TS variables, `kebab-case` files.
+- **Slug as URL identifier**: public-facing routes and API endpoints use `slug`, never `id`.
+- **Slug uniqueness before persistence**: generate and verify slug uniqueness in Trigger.dev Stage 2 before any DB write.
 
 ## Before Moving to the Next Unit
 

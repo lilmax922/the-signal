@@ -10,16 +10,16 @@
 
 ## Naming Conventions
 
-| Scope                        | Convention   | Examples                                 |
-| ---------------------------- | ------------ | ---------------------------------------- |
-| DB table names               | singular     | `signal`, `tag`, `signal_tag`            |
-| DB column names              | `snake_case` | `fact_hash`, `published_at`              |
-| TypeScript variables / functions | `camelCase`  | `signalId`, `fetchSignals()`             |
-| TypeScript types / interfaces | `PascalCase` | `Signal`, `SignalTag`, `LlmOutput`       |
-| Files and folders            | `kebab-case` | `signal-card.vue`, `use-signal-feed.ts`  |
-| Drizzle table variables      | `camelCase`  | `signalTag` (maps to `signal_tag` table) |
-| URL paths                    | `kebab-case` | `/api/signals`, `/api/signals/[id]`      |
-| CSS custom properties        | `kebab-case` | `--color-brand-500`                      |
+| Scope                             | Convention   | Examples                                      |
+| --------------------------------- | ------------ | --------------------------------------------- |
+| DB table names                    | singular     | `signal`, `tag`, `signal_tag`                 |
+| DB column names                   | `snake_case` | `hash`, `published_at`, `image_url`           |
+| TypeScript variables / functions  | `camelCase`  | `signalId`, `fetchSignals()`                  |
+| TypeScript types / interfaces     | `PascalCase` | `Signal`, `SignalTag`, `LlmOutput`            |
+| Files and folders                 | `kebab-case` | `signal-card.vue`, `use-signal-feed.ts`       |
+| Drizzle table variables           | `camelCase`  | `signalTag` (maps to `signal_tag` table)      |
+| URL paths                         | `kebab-case` | `/api/signals`, `/api/signals/[slug]`         |
+| CSS custom properties             | `kebab-case` | `--color-brand-500`                           |
 
 ## TypeScript
 
@@ -33,6 +33,7 @@
 
 - Follow the Nuxt 4 `app/` directory structure. See https://nuxt.com/docs/4.x/directory-structure.
 - `shared/` is safe to import from both `app/` and `server/`.
+- `server/database/` must never be imported from `app/`.
 
 ## Authentication & Authorization
 
@@ -42,9 +43,18 @@
 
 ## API Routes
 
-- Parse and validate all request input with Zod before any logic runs. Use schemas defined in `lib/validators/`.
+- Parse and validate all request input with Zod before any logic runs. Use schemas defined in `shared/validators/`.
 - Verify the Supabase Auth session via `serverSupabaseUser(event)` on every route.
 - Return consistent response shapes for both success and error states.
+- Signal detail routes use `slug` as the URL param — never `id`.
+
+## Routing
+
+- Signal detail is rendered at `/signal/[slug]`.
+- Opening a signal from the feed uses `router.push('/signal/[slug]')` — no full page reload.
+- Closing the detail view uses `router.push('/')` — no full page reload.
+- `app/pages/signal/[slug].vue` detects viewport size on mount and opens either the bottom drawer (mobile) or the Right-Side Pane (desktop).
+- Direct navigation to `/signal/[slug]` (e.g. from a shared link) must render the feed in the background with the signal detail open immediately.
 
 ## Styling
 
@@ -61,7 +71,7 @@
 
 ## Zod Usage
 
-- Define all Zod schemas in `lib/validators/`.
+- Define all Zod schemas in `shared/validators/`.
 - Every API route input must be validated with a Zod schema before any logic runs.
 - LLM JSON output must be parsed through `llmOutputSchema` before the data is trusted.
 - DB insert/update payloads should be validated before being passed to Drizzle.
@@ -71,34 +81,45 @@
 ```
 app/
   components/
-    signal/       # Signal feed components (signal-card.vue, signal-feed.vue, etc.)
-  app/            # Reusable app-wide components (buttons, inputs, etc.)
-  composables/    # Client-side composables (use-*.ts)
+    signal/         # Signal feed components (signal-card.vue, signal-feed.vue, etc.)
+    app/            # Reusable app-wide components (buttons, inputs, etc.)
+  composables/      # Client-side composables (use-*.ts)
   layouts/
   pages/
-  assets/css/     # main.css — OKLCH tokens
+    index.vue           # Feed page (/)
+    signal/
+      [slug].vue        # Signal detail page (/signal/[slug])
+  assets/css/
+    main.css            # OKLCH tokens, Tailwind config
 
 server/
   api/
-    signals/      # index.get.ts, [id].get.ts, search.get.ts
-  tasks/          # rss-ingest.ts, purge-old.ts
-  middleware/     # auth.ts
-  utils/          # server-only helpers
+    signals/
+      index.get.ts      # GET /api/signals (feed list)
+      [slug].get.ts     # GET /api/signals/[slug] (signal detail)
+      search.get.ts     # GET /api/signals/search
+  tasks/
+    rss-ingest.ts       # Nitro scheduled task — 08:00 and 20:00 daily
+    purge-old.ts        # Nitro scheduled task — 1st of each month
+  middleware/
+    auth.ts
+  utils/                # Server-only helpers
+  database/
+    index.ts            # Drizzle client
+    schema/
+      {schema}.ts
+      index.ts          # Re-exports all tables
+    migrations/         # Drizzle generated migrations
+    queries/            # Drizzle query helpers
 
 trigger/
-  refinery.ts     # AI pipeline job
-
-lib/
-  db/
-    index.ts      # Drizzle client
-    schema/       # Table definitions
-    migrations/   # Drizzle migrations
-    queries/      # Drizzle queries
-  validators/     # Zod schemas (signal.ts, etc.)
+  refinery.ts           # AI pipeline job
 
 shared/
-  types/          # TypeScript interfaces
-  constants/      # Shared constants (categories.ts, limits.ts)
+  types/                # TypeScript interfaces (signal.ts, tag.ts, etc.)
+  constants/            # Shared constants (categories.ts, limits.ts)
+  env.ts                # Environment variable definitions with validation
+  validators/           # Zod schemas (signal.ts, etc.)
 ```
 
 ## Agent Task Protocol

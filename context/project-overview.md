@@ -17,7 +17,8 @@
 2. Discovery & Exploration: Users browse the Global Signal Feed. The default view shows all categories. Users can filter by a pre-defined category (Tech, World, Science) via the Category Filter Rail.
 3. Search: Users use the **Semantic Command Palette** to search for specific entities or topics (e.g., "NVIDIA").
 4. Fact Scanning: Users scan structured Signal Cards in the feed, focusing on core facts and data points without emotional guidance.
-5. Context-Preserving Deep Dive: User taps a card to open a bottom drawer (Mobile) or right-side pane (Desktop) to read the full de-noised content and AI analysis.
+5. Context-Preserving Deep Dive: User clicks a card to open a bottom drawer (Mobile) or right-side pane (Desktop). The URL updates to `/signal/[slug]` — shareable.
+6. Shared Link: A user who receives a `/signal/[slug]` URL lands directly on the feed with the signal detail open, without any extra navigation step.
 
 ## Features
 
@@ -33,7 +34,8 @@
 - Objective Truth Interface: A minimalist UI using OKLCH colors, strictly excluding emotional indicators.
 - Scan-First Cards: Signal Cards designed for comfortable reading, featuring AI-generated entity tags and a 3-point structured summary.
 - Two-Column Card Stream: A stable, rhythm-based two-column grid on desktop (single column on mobile) for effortless vertical scanning.
-- Master-Detail Layout: A seamless desktop experience that loads the full article in the Right-side Pane without leaving the feed.
+- Master-Detail Layout: Clicking a card opens the Right-Side Pane (desktop) or bottom drawer (mobile) without leaving the feed. The URL updates to `/signal/[slug]`.
+- Shareable Signal URLs: Every signal has a unique, human-readable URL (`/signal/[slug]`). Sharing the URL opens the same feed + detail view for the recipient.
 - Unified Command Palette: A central interface for searching facts and entities across all signals.
 
 ## Scope
@@ -44,6 +46,7 @@
 - AI Pipeline for de-noising, translation, and structured summarization.
 - Nuxt 4-based full-stack web application with a focus on Mobile-first responsive design.
 - Supabase integration for Auth, PostgreSQL storage, and image hosting.
+- Semantic, shareable signal URLs (`/signal/[slug]`) with direct deep-link support.
 - Automatic purging of signals older than 3 months to maintain database hygiene.
 
 ### Out of Scope
@@ -60,4 +63,6 @@
 2. The AI successfully reduces raw article word counts by at least 50% while retaining all critical objective data.
 3. User can understand the core signal of an article within 15 seconds.
 4. AI output must be strictly factual — no fabricated data, no emotional language.
-5. Signals older than 3 months are automatically purged from the database.
+5. Clicking a signal updates the URL to `/signal/[slug]` and opens the detail view in-place.
+6. Navigating directly to `/signal/[slug]` renders the feed with the signal detail open immediately.
+7. Signals older than 3 months are automatically purged from the database.
