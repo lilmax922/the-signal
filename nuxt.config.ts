@@ -8,6 +8,16 @@ export default defineNuxtConfig({
     enabled: true,
   },
 
+  imports: {
+    dirs: ['shared/env.ts'],
+  },
+
+  nitro: {
+    imports: {
+      dirs: ['shared/env.ts'],
+    },
+  },
+
   css: ['~/assets/css/main.css'],
 
   colorMode: {

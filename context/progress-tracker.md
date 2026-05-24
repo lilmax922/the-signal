@@ -1,41 +1,24 @@
 # Progress Tracker
 
+Update this file after every meaningful implementation change.
+
 ## Current Phase
 
 - [x] Design system configuration
+- [x] Layout components
+- [x] Auth
+- [x] Drizzle ORM setup & initial migration
 
 ## Current Goal
 
-- [x] Implement base layout components per `feature-specs/02-layout.md`
+- Core feature implementation per `project-overview.md`
 
 ## Completed
 
-- Fixed ESLint crash by restricting `vue/max-attributes-per-line` rule to `.vue` files only.
-- Ran `pnpm lint --fix` to clean up the codebase.
-- Configured design system & Typography:
-  - Dark theme only (forced via `colorMode.preference: 'dark'`)
-  - Black (#000000) as application background
-  - Brand color (OKLCH-based) as primary color via `app.config.ts`
-  - Default border-radius set to 0.375rem via `--ui-radius`
-  - Configured bilingual `--font-sans` pairing (`Inter` and `Noto Sans TC`) and a clinical `--font-mono` stack (`JetBrains Mono`, `Fira Code`) for numeric and metadata data points.
-  - Neutral palette set to 'neutral' (balanced gray)
-  - Designed and documented a clinical, zero-sentiment Typography System in `context/ui-context.md` featuring standard Tailwind type-scales (`text-xs` to `text-2xl`), strict weight limits, background-color-free entity tags, and layout/tabular alignment conventions unified with the design system.
-- Implemented base layout components:
-  - Created `app/layouts/default.vue` as root layout
-  - Created `app/components/app/header.vue` with desktop/mobile responsive views
-  - Created `app/components/category-filter.vue` with horizontal scrollable categories
-  - Created `app/components/mobile-bottom-navbar.vue` for mobile-only bottom navigation
-  - Updated `app/app.vue` to use `NuxtLayout` wrapper
-- Implemented scroll-based show/hide for desktop CategoryFilter:
-  - Created `app/composables/use-scroll-collapse.ts` - generic scroll collapse composable (replaces `useHeaderScroll`)
-  - Created `app/components/app/scroll-collapse-section.vue` - reusable wrapper for scroll-based show/hide sections
-  - Updated `app/layouts/default.vue` to place CategoryFilter at top of main content on desktop
-  - CategoryFilter on desktop shows/hides based on scroll direction (scroll down = hide, scroll up = show).
-  - Resolved desktop layout bug where CategoryFilter was obscured by the fixed AppHeader: Added `lg:pt-16` to the layout root container as a header spacer, shifted CategoryFilter to `sticky top-16 z-40 bg-black/80 backdrop-blur-md` to align it beneath the header with a frosted glass backdrop, and removed redundant `lg:pt-16` padding from `<main>` to maintain proper document flow and smooth transitions when collapsed.
-- Redesigned login page per `03-auth.md`:
-  - Left panel: Positioned `pl-16` from left edge (comfortable positioning), features with small icons in rounded backgrounds, title and one-line description
-  - Right panel: Centered `UPageCard` with `variant="subtle"`, "The Signal" as title, "Welcome back! Please log in to continue" as description
-  - Mobile: Form only
+- **Design System** (`01-design-system.md`): Dark theme, OKLCH brand color, bilingual fonts, typography system
+- **Layout** (`02-layout.md`): Desktop/mobile responsive layout, header, CategoryFilter, MobileBottomNavbar, scroll-collapse
+- **Auth** (`03-auth.md`): Login page with OAuth (Google/GitHub) via `@nuxtjs/supabase`
+- **Drizzle ORM** (`04-setup-drizzle.md` + `database-schema.md`): Supabase direct connection, `server/database/` schema with `pgEnum` for `category`, `slug` column, `postgres(max: 1)`, `casing: 'snake_case'`, clean initial migration applied
 
 ## In Progress
 
@@ -43,7 +26,9 @@
 
 ## Next Up
 
-- Begin core feature implementation according to `project-overview.md`.
+- Nitro API routes (`/api/signals`, `/api/signals/[id]`, `/api/signals/search`)
+- Supabase Auth session middleware (`server/middleware/auth.ts`)
+- Trigger.dev refinery pipeline (`trigger/refinery.ts`)
 
 ## Open Questions
 
@@ -65,3 +50,4 @@
 - All components use NuxtUI semantic color tokens (`border-default`, `text-highlighted`, etc.) and OKLCH brand color system.
 - Typography system fully documented and unified with the design-system context using standard Tailwind default classes and background-color-free entity tags.
 - Updated app to follow Typography guidelines: `--font-mono` added to main.css for monospace stack; layout components use appropriate font scales and weights per the "Objective Minimalist" design philosophy.
+- Drizzle ORM fully configured with Supabase direct connection. `server/database/` is server-only (never imported from `app/`). All 3 tables created in Supabase with proper indexes, enums, and foreign keys. CamelCase → snake_case mapping handled by Drizzle's `casing: 'snake_case'` option.

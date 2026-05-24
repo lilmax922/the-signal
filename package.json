@@ -10,7 +10,10 @@
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "nuxt typecheck"
+    "typecheck": "nuxt typecheck",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.105",
@@ -18,13 +21,16 @@
     "@nuxt/ui": "^4.7.1",
     "@nuxtjs/supabase": "2.0.9",
     "@vueuse/core": "^14.3.0",
+    "drizzle-orm": "^0.45.2",
     "nuxt": "^4.4.4",
+    "postgres": "^3.4.9",
     "tailwindcss": "^4.2.4",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^8.2.0",
     "@nuxt/eslint": "^1.15.2",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^10.3.0",
     "eslint-plugin-format": "^2.0.1",
     "typescript": "^6.0.3",

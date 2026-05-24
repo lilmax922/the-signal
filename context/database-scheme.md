@@ -111,7 +111,8 @@ export const signal = pgTable('signal', {
   imageAlt:      text(),
   sourceUrl:     text().notNull(),
   publishedAt:   timestamp({ withTimezone: true }).notNull(),
-  createdAt:     timestamp({ withTimezone: true }).defaultNow(),
+  createdAt:     timestamp({ withTimezone: true }).notNull().defaultNow(),
+  updatedAt:     timestamp({ withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   pipelineRunId: text(),
 }, t => [
   index('idx_signal_category_published').on(t.category, t.publishedAt.desc()),
@@ -127,7 +128,8 @@ import { pgTable, uuid, text, timestamp } from 'drizzle-orm/pg-core'
 export const tag = pgTable('tag', {
   id:        uuid().primaryKey().defaultRandom(),
   name:      text().notNull().unique(),
-  createdAt: timestamp({ withTimezone: true }).defaultNow(),
+  createdAt:     timestamp({ withTimezone: true }).notNull().defaultNow(),
+  updatedAt:     timestamp({ withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 })
 ```
 
