@@ -19,7 +19,8 @@
     "@nuxtjs/supabase": "2.0.9",
     "@vueuse/core": "^14.3.0",
     "nuxt": "^4.4.4",
-    "tailwindcss": "^4.2.4"
+    "tailwindcss": "^4.2.4",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^8.2.0",

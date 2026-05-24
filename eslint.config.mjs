@@ -16,9 +16,11 @@ export default withNuxt(antfu({
   ],
 }, {
   rules: {
+    'ts/no-redeclare': 'off',
     'ts/consistent-type-definitions': ['error', 'type'],
     'no-console': ['warn'],
     'node/no-process-env': ['error'],
+    'node/prefer-global/process': ['off'],
     'unicorn/filename-case': ['error', {
       case: 'kebabCase',
       ignore: ['README.md'],
