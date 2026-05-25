@@ -13,7 +13,7 @@
 | Scope                             | Convention   | Examples                                      |
 | --------------------------------- | ------------ | --------------------------------------------- |
 | DB table names                    | singular     | `signal`, `tag`, `signal_tag`                 |
-| DB column names                   | `snake_case` | `hash`, `published_at`, `image_url`           |
+| DB column names                   | `snake_case` | `guid`, `published_at`, `image_url`           |
 | TypeScript variables / functions  | `camelCase`  | `signalId`, `fetchSignals()`                  |
 | TypeScript types / interfaces     | `PascalCase` | `Signal`, `SignalTag`, `LlmOutput`            |
 | Files and folders                 | `kebab-case` | `signal-card.vue`, `use-signal-feed.ts`       |

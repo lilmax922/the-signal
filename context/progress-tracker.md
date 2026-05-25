@@ -19,6 +19,8 @@ Update this file after every meaningful implementation change.
 - **Layout** (`02-layout.md`): Desktop/mobile responsive layout, header, CategoryFilter, MobileBottomNavbar, scroll-collapse
 - **Auth** (`03-auth.md`): Login page with OAuth (Google/GitHub) via `@nuxtjs/supabase`
 - **Drizzle ORM** (`04-setup-drizzle.md` + `database-schema.md`): Supabase direct connection, `server/database/` schema with `pgEnum` for `category`, `slug` column, `postgres(max: 1)`, `casing: 'snake_case'`, clean initial migration applied
+- **RSS Ingestion** (`05-rss-ingestion.md`): `shared/validators/signal.ts` — `CategorySchema` (`'finance' | 'tech' | 'world'`) and `Category` type; `shared/validators/rss.ts` — `rawRssItemSchema`, `rawRssFeedSchema`, `rssItemSchema`, `RssItem` type; `server/utils/fetch-rss.ts` — `fetchRssFeed(category: Category)` returning `Promise<RssItem[]>` with full error handling, Zod validation, and RFC822→ISO8601 date transformation
+
 
 ## In Progress
 

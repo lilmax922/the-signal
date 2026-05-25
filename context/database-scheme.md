@@ -24,9 +24,9 @@ The core content table. Each row is one fully-processed Signal Card.
 | ----------------- | ------------- | ----------------------------------------------- | ------------------------------------------------------------------------ |
 | `id`              | `uuid`        | PK, default `gen_random_uuid()`                 | Unique internal identifier.                                              |
 | `slug`            | `text`        | UNIQUE, NOT NULL                                | URL-safe identifier. Format: `{slugified-title-en}-{YYYY-MM-DD}`. Used in all public-facing routes. |
-| `hash`            | `text`        | UNIQUE, NOT NULL                                | SHA-256 of (`source_url` + `title_en`). Pipeline deduplication key only — never exposed in URLs. |
+| `guid`            | `text`        | UNIQUE, NOT NULL                                | `guid` from RSS metadata. Pipeline deduplication key only — never exposed in URLs. |
 | `category`        | `text`        | NOT NULL, CHECK IN (`finance`, `tech`, `world`) | Derived from the source RSS feed path.                                   |
-| `title_en`        | `text`        | NOT NULL                                        | Original English headline from RSS metadata.                             |
+| `title_en`        | `text`        | NOT NULL                                        | De-noised English headline.                             |
 | `title_zh`        | `text`        | NOT NULL                                        | De-noised Traditional Chinese headline.                                  |
 | `content_en`      | `text`        | NOT NULL                                        | De-noised English body. Retained for potential re-processing.            |
 | `content_zh`      | `text`        | NOT NULL                                        | Translated Traditional Chinese body. Rendered in the UI.                 |
@@ -100,7 +100,7 @@ import { sql } from 'drizzle-orm'
 export const signal = pgTable('signal', {
   id:            uuid().primaryKey().defaultRandom(),
   slug:          text().notNull().unique(),
-  hash:          text().notNull().unique(),
+  guid:          text().notNull().unique(),
   category:      text().notNull(),
   titleEn:       text().notNull(),
   titleZh:       text().notNull(),
@@ -168,7 +168,7 @@ export const categorySchema = z.enum(['finance', 'tech', 'world'])
 export const signalSchema = z.object({
   id:            z.string().uuid(),
   slug:          z.string().min(1),
-  hash:          z.string(),
+  guid:          z.string().min(1),
   category:      categorySchema,
   titleEn:       z.string().min(1),
   titleZh:       z.string().min(1),

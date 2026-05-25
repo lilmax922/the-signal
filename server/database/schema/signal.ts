@@ -12,7 +12,7 @@ export const categoryEnum = pgEnum('category', ['finance', 'tech', 'world'])
 export const signal = pgTable('signal', {
   id: uuid().primaryKey().defaultRandom(),
   slug: text().notNull().unique(),
-  hash: text().notNull().unique(),
+  guid: text().notNull().unique(),
   category: categoryEnum().notNull(),
   titleEn: text().notNull(),
   titleZh: text().notNull(),

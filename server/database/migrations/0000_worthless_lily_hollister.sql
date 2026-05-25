@@ -2,7 +2,7 @@ CREATE TYPE "public"."category" AS ENUM('finance', 'tech', 'world');--> statemen
 CREATE TABLE "signal" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"slug" text NOT NULL,
-	"hash" text NOT NULL,
+	"guid" text NOT NULL,
 	"category" "category" NOT NULL,
 	"title_en" text NOT NULL,
 	"title_zh" text NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE "signal" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"pipeline_run_id" text,
 	CONSTRAINT "signal_slug_unique" UNIQUE("slug"),
-	CONSTRAINT "signal_hash_unique" UNIQUE("hash")
+	CONSTRAINT "signal_guid_unique" UNIQUE("guid")
 );
 --> statement-breakpoint
 CREATE TABLE "signal_tag" (

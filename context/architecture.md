@@ -100,7 +100,7 @@ Signal detail content is rendered in a Drawer (mobile) or Right-Side Pane (deskt
 ### Stage 1 — Nitro Scheduled Task (08:00 and 20:00 daily)
 
 1. **RSS Ingestion**: Fetch Yahoo News RSS (`finance`, `tech`, `world`).
-2. **Deduplication**: Compute `hash` (SHA-256 of `source_url` + `title_en`). Query DB — skip existing hashes.
+2. **Deduplication**: Use `guid` from RSS metadata. Query DB — skip existing guids.
 3. **Article Extraction**: `@extractus/article-extractor` per URL. Quality gate: skip if extracted text < 200 characters.
 4. **Hand-off**: Trigger a Trigger.dev job with the validated article batch.
 
@@ -127,7 +127,7 @@ Signal detail content is rendered in a Drawer (mobile) or Right-Side Pane (deskt
 ## Invariants
 
 1. **Non-Blocking Nitro**: Long-running AI tasks and media uploads must never run on the main Nitro thread — always delegate to `trigger/`.
-2. **Unique Fact Rule**: `hash` deduplication must occur before any AI call is made.
+2. **Unique Fact Rule**: `guid` deduplication must occur before any AI call is made.
 3. **No Third-Party CDN URLs**: Images must always be mirrored to Supabase Storage. Yahoo CDN URLs must never be stored in the DB.
 4. **Single LLM Call per Article**: De-noising, translation, tag extraction, and summary must be batched into one OpenRouter request.
 5. **No User-Specific Storage**: No profile, saved signals, tracked tags, or email digest tables exist. User identity is provided entirely by `@nuxtjs/supabase`.

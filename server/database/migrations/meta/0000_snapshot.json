@@ -1,5 +1,5 @@
 {
-  "id": "b64d3091-86ea-45e4-baf3-4376f811d896",
+  "id": "b5fd72b5-c072-440d-9ae0-6877c0d71066",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -21,8 +21,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "hash": {
-          "name": "hash",
+        "guid": {
+          "name": "guid",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -157,11 +157,11 @@
             "slug"
           ]
         },
-        "signal_hash_unique": {
-          "name": "signal_hash_unique",
+        "signal_guid_unique": {
+          "name": "signal_guid_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "hash"
+            "guid"
           ]
         }
       },
