@@ -156,7 +156,7 @@ Cards use `rounded-2xl` with a subtle variant.
   - **Scroll-Down**: Conceals the search input and Category Filter Rail to maximise reading space.
   - **Scroll-Up**: Reveals the search input, notification icon, and Category Filter Rail.
   - Hysteresis threshold: controls only toggle after sustained scroll direction.
-- **Category Filter Rail**: Horizontal scroll tab rail inside the header. Tabs: All / Tech / World / Science.
+- **Category Filter Rail**: Horizontal scroll tab rail inside the header. Tabs: All / Finance / Tech / World.
 - **Feed**: Single-column card list with `space-y-4` between cards and `px-4` page margin.
 - **Bottom Navigation**: Low-profile persistent footer for switching between primary views.
 

@@ -1,4 +1,4 @@
-CREATE TYPE "public"."category" AS ENUM('tech', 'world', 'science');--> statement-breakpoint
+CREATE TYPE "public"."category" AS ENUM('finance', 'tech', 'world');--> statement-breakpoint
 CREATE TABLE "signal" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"slug" text NOT NULL,

@@ -2,7 +2,7 @@
 
 ## Overview
 
-**The Signal** is an automated information refinery system designed to strip away emotional bias and hyperbolic language from news and articles. By transforming raw news reports (from Yahoo News — Tech, World, Science) into structured, fact-based "Signal Cards," it serves as a noise-filtering terminal for users who need to grasp the objective truth and raw data of a situation in under 15 seconds.
+**The Signal** is an automated information refinery system designed to strip away emotional bias and hyperbolic language from news and articles. By transforming raw news reports (from Yahoo News — Finance, Tech, World) into structured, fact-based "Signal Cards," it serves as a noise-filtering terminal for users who need to grasp the objective truth and raw data of a situation in under 15 seconds.
 
 ## Goals
 
@@ -14,7 +14,7 @@
 ## Core User Flow
 
 1. Authentication: User signs in using Google or GitHub (via Supabase Auth).
-2. Discovery & Exploration: Users browse the Global Signal Feed. The default view shows all categories. Users can filter by a pre-defined category (Tech, World, Science) via the Category Filter Rail.
+2. Discovery & Exploration: Users browse the Global Signal Feed. The default view shows all categories. Users can filter by a pre-defined category (Tech, World, Finance) via the Category Filter Rail.
 3. Search: Users use the **Semantic Command Palette** to search for specific entities or topics (e.g., "NVIDIA").
 4. Fact Scanning: Users scan structured Signal Cards in the feed, focusing on core facts and data points without emotional guidance.
 5. Context-Preserving Deep Dive: User clicks a card to open a bottom drawer (Mobile) or right-side pane (Desktop). The URL updates to `/signal/[slug]` — shareable.
@@ -42,7 +42,7 @@
 
 ### In Scope
 
-- Automated scraping and processing of Yahoo News feeds (Tech, World, Science categories).
+- Automated scraping and processing of Yahoo News feeds (Tech, World, Finance categories).
 - AI Pipeline for de-noising, translation, and structured summarization.
 - Nuxt 4-based full-stack web application with a focus on Mobile-first responsive design.
 - Supabase integration for Auth, PostgreSQL storage, and image hosting.

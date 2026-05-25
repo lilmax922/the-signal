@@ -7,7 +7,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core'
 
-export const categoryEnum = pgEnum('category', ['tech', 'world', 'science'])
+export const categoryEnum = pgEnum('category', ['finance', 'tech', 'world'])
 
 export const signal = pgTable('signal', {
   id: uuid().primaryKey().defaultRandom(),

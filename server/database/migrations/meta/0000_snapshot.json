@@ -1,5 +1,5 @@
 {
-  "id": "8278943c-1086-4361-bc6b-a9262334c710",
+  "id": "b64d3091-86ea-45e4-baf3-4376f811d896",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -314,9 +314,9 @@
       "name": "category",
       "schema": "public",
       "values": [
+        "finance",
         "tech",
-        "world",
-        "science"
+        "world"
       ]
     }
   },

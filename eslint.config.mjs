@@ -13,6 +13,7 @@ export default withNuxt(antfu({
     'context/**/*.md',
     'pnpm-*',
     'tsconfig.json',
+    'server/database/migrations/*',
   ],
 }, {
   rules: {

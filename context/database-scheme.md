@@ -25,7 +25,7 @@ The core content table. Each row is one fully-processed Signal Card.
 | `id`              | `uuid`        | PK, default `gen_random_uuid()`                 | Unique internal identifier.                                              |
 | `slug`            | `text`        | UNIQUE, NOT NULL                                | URL-safe identifier. Format: `{slugified-title-en}-{YYYY-MM-DD}`. Used in all public-facing routes. |
 | `hash`            | `text`        | UNIQUE, NOT NULL                                | SHA-256 of (`source_url` + `title_en`). Pipeline deduplication key only — never exposed in URLs. |
-| `category`        | `text`        | NOT NULL, CHECK IN (`tech`, `world`, `science`) | Derived from the source RSS feed path.                                   |
+| `category`        | `text`        | NOT NULL, CHECK IN (`finance`, `tech`, `world`) | Derived from the source RSS feed path.                                   |
 | `title_en`        | `text`        | NOT NULL                                        | Original English headline from RSS metadata.                             |
 | `title_zh`        | `text`        | NOT NULL                                        | De-noised Traditional Chinese headline.                                  |
 | `content_en`      | `text`        | NOT NULL                                        | De-noised English body. Retained for potential re-processing.            |
@@ -117,7 +117,7 @@ export const signal = pgTable('signal', {
 }, t => [
   index('idx_signal_category_published').on(t.category, t.publishedAt.desc()),
   index('idx_signal_published_at').on(t.publishedAt.desc()),
-  check('signal_category_check', sql`${t.category} IN ('tech', 'world', 'science')`),
+  check('signal_category_check', sql`${t.category} IN ('finance', 'tech', 'world')`),
 ])
 ```
 
@@ -163,7 +163,7 @@ export * from './signal-tag'
 ```ts
 import { z } from 'zod'
 
-export const categorySchema = z.enum(['tech', 'world', 'science'])
+export const categorySchema = z.enum(['finance', 'tech', 'world'])
 
 export const signalSchema = z.object({
   id:            z.string().uuid(),

@@ -99,7 +99,7 @@ Signal detail content is rendered in a Drawer (mobile) or Right-Side Pane (deskt
 
 ### Stage 1 — Nitro Scheduled Task (08:00 and 20:00 daily)
 
-1. **RSS Ingestion**: Fetch Yahoo News RSS (`/news/tech`, `/news/world`, `/news/science`).
+1. **RSS Ingestion**: Fetch Yahoo News RSS (`finance`, `tech`, `world`).
 2. **Deduplication**: Compute `hash` (SHA-256 of `source_url` + `title_en`). Query DB — skip existing hashes.
 3. **Article Extraction**: `@extractus/article-extractor` per URL. Quality gate: skip if extracted text < 200 characters.
 4. **Hand-off**: Trigger a Trigger.dev job with the validated article batch.
