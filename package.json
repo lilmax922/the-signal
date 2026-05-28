@@ -5,7 +5,7 @@
   "packageManager": "pnpm@10.33.2",
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "concurrently \"pnpm trigger:dev\" \"nuxt dev\"",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
@@ -13,19 +13,24 @@
     "typecheck": "nuxt typecheck",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "trigger:dev": "npx trigger.dev@latest dev"
   },
   "dependencies": {
+    "@extractus/article-extractor": "^8.1.0",
     "@iconify-json/lucide": "^1.2.105",
     "@iconify-json/simple-icons": "^1.2.80",
     "@nuxt/ui": "^4.7.1",
     "@nuxtjs/supabase": "2.0.9",
+    "@trigger.dev/sdk": "^4.4.6",
     "@vueuse/core": "^14.3.0",
+    "concurrently": "^10.0.0",
     "drizzle-orm": "^0.45.2",
     "fast-xml-parser": "^5.8.0",
     "nuxt": "^4.4.4",
     "postgres": "^3.4.9",
     "tailwindcss": "^4.2.4",
+    "undici": "^8.3.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

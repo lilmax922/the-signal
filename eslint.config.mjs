@@ -14,6 +14,8 @@ export default withNuxt(antfu({
     'pnpm-*',
     'tsconfig.json',
     'server/database/migrations/*',
+    '.trigger/*',
+    'AGENTS.md',
   ],
 }, {
   rules: {

@@ -1,5 +1,7 @@
 import type { RssItem } from '#shared/validators/rss'
 import type { Category } from '#shared/validators/signal'
+import type { refineryAgentTask } from '../../trigger/refinery-agent'
+import { tasks } from '@trigger.dev/sdk'
 import { refineryPayloadSchema } from '#shared/validators/rss'
 import { findSignalByGuid } from '../database/queries/signal'
 
@@ -38,12 +40,13 @@ export default defineTask({
           continue
         }
 
-        console.log(`[rss-ingestion] Trigger refinery for guid=${item.guid}`)
+        console.warn(`[rss-ingestion] Trigger refinery for guid=${item.guid}`)
+        await tasks.trigger<typeof refineryAgentTask>('refinery-agent', validated.data)
         results.new++
         newCount++
 
         if (newCount >= 5) {
-          console.log(`[rss-ingestion] Reached limit of 5 new articles for "${category}"`)
+          console.warn(`[rss-ingestion] Reached limit of 5 new articles for "${category}"`)
           break
         }
       }

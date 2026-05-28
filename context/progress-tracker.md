@@ -19,8 +19,9 @@ Update this file after every meaningful implementation change.
 - **Layout** (`02-layout.md`): Desktop/mobile responsive layout, header, CategoryFilter, MobileBottomNavbar, scroll-collapse
 - **Auth** (`03-auth.md`): Login page with OAuth (Google/GitHub) via `@nuxtjs/supabase`
 - **Drizzle ORM** (`04-setup-drizzle.md` + `database-schema.md`): Supabase direct connection, `server/database/` schema with `pgEnum` for `category`, `slug` column, `postgres(max: 1)`, `casing: 'snake_case'`, clean initial migration applied
-- **RSS Ingestion** (`05-rss-ingestion.md`): `shared/validators/signal.ts` — `CategorySchema` (`'finance' | 'tech' | 'world'`) and `Category` type; `shared/validators/rss.ts` — `rawRssItemSchema`, `rawRssFeedSchema`, `rssItemSchema`, `RssItem` type; `server/utils/fetch-rss.ts` — `fetchRssFeed(category: Category)` returning `Promise<RssItem[]>` with full error handling, Zod validation, and RFC822→ISO8601 date transformation
 - **RSS Nitro Task** (`06-rss-nitro-task.md`): `server/database/queries/signal.ts` — `findSignalByGuid(guid)` query with Drizzle ORM relational query API; `shared/validators/rss.ts` — added `refineryPayloadSchema` and `RefineryPayload` type; `server/tasks/rss-ingestion.ts` — Nitro task with `name: "rss-ingestion"`, fetches Yahoo RSS feeds for finance/tech/world categories, de-duplicates by guid, validates against `refineryPayloadSchema`, limits to 5 new articles per category, placeholder for Trigger.dev pipeline; `nuxt.config.ts` scheduled tasks for `0 8,20 * * *` (08:00 and 20:00 daily)
+- **Trigger.dev Setup** (`07-trigger-dev.md`): Installed `@trigger.dev/sdk` (v4.4.6), created `trigger.config.ts` with node-22 runtime, retries disabled in dev; created `trigger/` directory with `example.ts` (example task) and `refinery.ts` (schemaTask for article processing with Zod validation)
+- **Extract Detail Content** (`07-extract-detail-content.md`): Installed `@extractus/article-extractor` (v8.1.0) and `undici`; created `trigger/refinery-agent.ts` — schemaTask that validates payloads against `refineryPayloadSchema`, extracts article content via `@extractus/article-extractor`, strips HTML tags, and logs extracted content; updated `server/tasks/rss-ingestion.ts` to trigger `refinery-agent` task with validated payload data; created `shared/utils/extractor.ts` using `undici`'s `setGlobalDispatcher` with `maxHeaderSize: 32768` — needed because Trigger.dev tasks run outside the Nuxt Nitro context where `$fetch` auto-imports aren't available, and to bypass Yahoo Finance's `HeadersOverflowError` (16KB default limit); uses browser User-Agent headers to bypass anti-bot blocking
 
 
 ## In Progress
@@ -31,7 +32,6 @@ Update this file after every meaningful implementation change.
 
 - Nitro API routes (`/api/signals`, `/api/signals/[id]`, `/api/signals/search`)
 - Supabase Auth session middleware (`server/middleware/auth.ts`)
-- Trigger.dev refinery pipeline (`trigger/refinery.ts`)
 
 ## Open Questions
 
@@ -44,6 +44,7 @@ Update this file after every meaningful implementation change.
 - **Layout Component Strategy**: Desktop shows header with search and avatar dropdown; mobile header collapses on scroll with hysteresis threshold, shows search bar and category filter below title.
 - **Scroll Collapse Pattern**: Created generic `useScrollCollapse` composable and `AppScrollCollapseSection` wrapper component to handle scroll-based show/hide behavior. This keeps scroll logic encapsulated and reusable. CategoryFilter remains a pure presentational component without scroll awareness.
 - **Objective Minimalist Typography System**: Configured a clinical, language-agnostic typography system in `ui-context.md` pairing standard readable sans-serif fonts with a monospace stack (`JetBrains Mono` / `Fira Code`). The system uses the standard Tailwind CSS size scale (`text-xs` to `text-2xl`), restricts weights to a maximum of `600` (Semi-Bold), and forbids bold text and italics in de-noised content to preserve neutrality. Enforces tabular figures (`tabular-nums`) for column alignment and specifies background-color-free entity tags for clean typography.
+- **Trigger.dev Configuration**: Uses `trigger.config.ts` with `dirs: ["./trigger"]`, node-22 runtime, and retries disabled in development. Tasks are schemaTask with Zod validation for type-safe payloads. The Nitro RSS ingestion task acts as the orchestrator, triggering the Trigger.dev refinery pipeline for article processing.
 
 ## Session Notes
 
@@ -54,3 +55,4 @@ Update this file after every meaningful implementation change.
 - Typography system fully documented and unified with the design-system context using standard Tailwind default classes and background-color-free entity tags.
 - Updated app to follow Typography guidelines: `--font-mono` added to main.css for monospace stack; layout components use appropriate font scales and weights per the "Objective Minimalist" design philosophy.
 - Drizzle ORM fully configured with Supabase direct connection. `server/database/` is server-only (never imported from `app/`). All 3 tables created in Supabase with proper indexes, enums, and foreign keys. CamelCase → snake_case mapping handled by Drizzle's `casing: 'snake_case'` option.
+- Fixed `TypeError: fetch failed` / `HeadersOverflowError` when fetching Yahoo Finance articles: `@extractus/article-extractor`'s built-in `retrieve()` uses Node's native undici fetch with a 16KB header limit, which Yahoo Finance exceeds. Solved by using `undici` directly in `shared/utils/extractor.ts` with `setGlobalDispatcher(new Agent({ maxHeaderSize: 32768 }))` to configure a 32KB header limit globally. Uses browser User-Agent headers to bypass anti-bot measures.
