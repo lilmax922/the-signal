@@ -3,7 +3,7 @@ import { CategorySchema } from './signal'
 
 export const rawRssItemSchema = z.object({
   'title': z.string().min(1),
-  'link': z.string().url(),
+  'link': z.url(),
   'pubDate': z.string(),
   'guid': z.union([
     z.string(),
@@ -23,10 +23,21 @@ export const rawRssFeedSchema = z.object({
 export const rssItemSchema = z.object({
   guid: z.string().min(1),
   title: z.string().min(1),
-  sourceUrl: z.string().url(),
-  publishedAt: z.string().datetime(),
-  imageUrl: z.string().url().nullable(),
+  sourceUrl: z.url(),
+  publishedAt: z.iso.datetime(),
+  imageUrl: z.url().nullable(),
   category: CategorySchema,
 })
 
 export type RssItem = z.infer<typeof rssItemSchema>
+
+export const refineryPayloadSchema = z.object({
+  guid: z.string().min(1),
+  title: z.string().min(1),
+  sourceUrl: z.url(),
+  publishedAt: z.iso.datetime(),
+  imageUrl: z.url().nullable(),
+  category: CategorySchema,
+})
+
+export type RefineryPayload = z.infer<typeof refineryPayloadSchema>

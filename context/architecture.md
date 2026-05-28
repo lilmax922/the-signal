@@ -101,11 +101,11 @@ Signal detail content is rendered in a Drawer (mobile) or Right-Side Pane (deskt
 
 1. **RSS Ingestion**: Fetch Yahoo News RSS (`finance`, `tech`, `world`).
 2. **Deduplication**: Use `guid` from RSS metadata. Query DB — skip existing guids.
-3. **Article Extraction**: `@extractus/article-extractor` per URL. Quality gate: skip if extracted text < 200 characters.
-4. **Hand-off**: Trigger a Trigger.dev job with the validated article batch.
+3. **Hand-off**: Trigger a Trigger.dev job with the validated article batch.
 
 ### Stage 2 — Trigger.dev Background Job (per article)
 
+4. **Article Extraction**: `@extractus/article-extractor` per URL. Quality gate: skip if extracted text < 200 characters.
 5. **Single LLM Call (OpenRouter)**: One prompt performs: de-noising, Traditional Chinese translation, entity tag extraction (max 3), 3-point summary. Output: validated JSON via Zod.
 6. **Slug Generation**: Slugify `title_en` + append `YYYY-MM-DD` from `published_at`. If collision exists in DB, append `-2`, `-3`, etc.
 7. **Media Mirroring**: Download image → upload to Supabase Storage → obtain public URL.

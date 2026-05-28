@@ -13,8 +13,14 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    experimental: {
+      tasks: true,
+    },
     imports: {
       dirs: ['shared/env.ts'],
+    },
+    scheduledTasks: {
+      '0 8,20 * * *': ['rss-ingestion'], // 08:00 and 20:00 daily
     },
   },
 
