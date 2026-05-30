@@ -1,5 +1,5 @@
 {
-  "id": "b5fd72b5-c072-440d-9ae0-6877c0d71066",
+  "id": "13c42076-c135-4f20-96ad-80edbb824373",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -55,6 +55,12 @@
         "content_zh": {
           "name": "content_zh",
           "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary_en": {
+          "name": "summary_en",
+          "type": "text[]",
           "primaryKey": false,
           "notNull": true
         },

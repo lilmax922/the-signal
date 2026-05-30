@@ -8,6 +8,7 @@ CREATE TABLE "signal" (
 	"title_zh" text NOT NULL,
 	"content_en" text NOT NULL,
 	"content_zh" text NOT NULL,
+	"summary_en" text[] NOT NULL,
 	"summary_zh" text[] NOT NULL,
 	"image_url" text,
 	"image_alt" text,

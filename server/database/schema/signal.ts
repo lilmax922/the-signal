@@ -18,6 +18,7 @@ export const signal = pgTable('signal', {
   titleZh: text().notNull(),
   contentEn: text().notNull(),
   contentZh: text().notNull(),
+  summaryEn: text().array().notNull(),
   summaryZh: text().array().notNull(),
   imageUrl: text(),
   imageAlt: text(),
