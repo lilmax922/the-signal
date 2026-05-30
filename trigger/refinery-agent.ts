@@ -1,24 +1,65 @@
+import type { LlmOutput } from '../shared/validators/llm'
+import { OpenRouter } from '@openrouter/sdk'
 import { logger, schemaTask } from '@trigger.dev/sdk'
-import { extractArticleContent } from '../shared/utils/extractor'
+import env from '../shared/env'
+import { llmOutputSchema } from '../shared/validators/llm'
 import { refineryPayloadSchema } from '../shared/validators/rss'
+import { buildPrompt } from './utils/build-prompt'
+import { extractArticleContent } from './utils/extractor'
+
+const openrouter = new OpenRouter({
+  apiKey: env.OPENROUTER_API_KEY,
+})
 
 export const refineryAgentTask = schemaTask({
   id: 'refinery-agent',
   schema: refineryPayloadSchema,
-  run: async (payload) => {
-    logger.info(`[refinery-agent] Extracting content from: ${payload.sourceUrl}`)
+  run: async (payload, { ctx }) => {
+    const guid = payload.guid
+    const pipelineRunId = ctx.run.id
 
-    const cleanedContent = await extractArticleContent(payload.sourceUrl)
+    logger.info('Refinery started', { guid: payload.guid, pipelineRunId })
 
-    logger.info(`[refinery-agent] Extracted content (${cleanedContent.length} chars): ${cleanedContent.slice(0, 200)}...`)
+    const extractedContent = await extractArticleContent(payload.sourceUrl)
+
+    logger.info(`Extracted content (${extractedContent.length} chars): ${extractedContent.slice(0, 200)}...`)
+
+    logger.info(`Calling LLM for guid: ${guid}`)
+
+    let llmOutput: LlmOutput
+
+    try {
+      const response = await openrouter.chat.send({
+        chatRequest: {
+          model: 'google/gemma-4-31b-it:free',
+          messages: [{
+            role: 'user',
+            content: buildPrompt(payload.title, extractedContent),
+          }],
+        },
+      })
+
+      const responseText: string = response.choices?.[0]?.message?.content ?? ''
+
+      llmOutput = llmOutputSchema.parse(JSON.parse(responseText))
+    }
+    catch (err) {
+      logger.error('LLM call failed or returned invalid JSON', {
+        guid,
+        pipelineRunId,
+        err,
+      })
+      throw err
+    }
 
     return {
-      guid: payload.guid,
+      guid,
       title: payload.title,
       sourceUrl: payload.sourceUrl,
       category: payload.category,
-      contentLength: cleanedContent.length,
+      contentLength: extractedContent.length,
       timestamp: new Date().toISOString(),
+      llmOutput,
     }
   },
 })

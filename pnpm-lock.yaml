@@ -23,6 +23,9 @@ importers:
       '@nuxtjs/supabase':
         specifier: 2.0.9
         version: 2.0.9
+      '@openrouter/sdk':
+        specifier: ^0.12.79
+        version: 0.12.79
       '@trigger.dev/sdk':
         specifier: ^4.4.6
         version: 4.4.6(zod@4.4.3)
@@ -1334,6 +1337,9 @@ packages:
 
   '@nuxtjs/supabase@2.0.9':
     resolution: {integrity: sha512-nDPslxt/Af5ya21m19rcb0kwZeAYVcvfw3VOxiViZuW0OFL0Xmi+kowSoqXnyuNJKEesvmXZKBV0rwh0FSERHg==}
+
+  '@openrouter/sdk@0.12.79':
+    resolution: {integrity: sha512-0ZpwtnuHh3/B1piW9kHCUIQy6PAsaK/vjFdZuHxmCdAenCyUNsLA2mFpmfHNWRNb+bOO3yBc4IALa264UyzmBA==}
 
   '@opentelemetry/api-logs@0.203.0':
     resolution: {integrity: sha512-9B9RU0H7Ya1Dx/Rkyc4stuBZSGVQF27WigitInx2QQoj6KUpEFYPKoWjdFTunJYxmXmh17HeBvbMa1EhGyPmqQ==}
@@ -8290,6 +8296,10 @@ snapshots:
       '@supabase/supabase-js': 2.106.1
       defu: 6.1.7
       pathe: 2.0.3
+
+  '@openrouter/sdk@0.12.79':
+    dependencies:
+      zod: 4.4.3
 
   '@opentelemetry/api-logs@0.203.0':
     dependencies:

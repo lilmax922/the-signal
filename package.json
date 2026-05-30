@@ -22,6 +22,7 @@
     "@iconify-json/simple-icons": "^1.2.80",
     "@nuxt/ui": "^4.7.1",
     "@nuxtjs/supabase": "2.0.9",
+    "@openrouter/sdk": "^0.12.79",
     "@trigger.dev/sdk": "^4.4.6",
     "@vueuse/core": "^14.3.0",
     "concurrently": "^10.0.0",

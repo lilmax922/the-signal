@@ -106,6 +106,7 @@ export const signal = pgTable('signal', {
   titleZh:       text().notNull(),
   contentEn:     text().notNull(),
   contentZh:     text().notNull(),
+  summaryEn:     text().array().notNull(),
   summaryZh:     text().array().notNull(),
   imageUrl:      text(),
   imageAlt:      text(),
@@ -174,6 +175,7 @@ export const signalSchema = z.object({
   titleZh:       z.string().min(1),
   contentEn:     z.string().min(1),
   contentZh:     z.string().min(1),
+  summaryEn:     z.array(z.string().min(1)).length(3),
   summaryZh:     z.array(z.string().min(1)).length(3),
   imageUrl:      z.string().url().nullable(),
   imageAlt:      z.string().nullable(),
@@ -188,8 +190,9 @@ export const llmOutputSchema = z.object({
   titleZh:   z.string().min(1),
   contentEn: z.string().min(1),
   contentZh: z.string().min(1),
+  summaryEn: z.array(z.string().min(1)).length(3),
   summaryZh: z.array(z.string().min(1)).length(3),
-  tags:      z.array(z.string().min(1)).max(3),
+  tags:      z.array(z.string().min(1)).max(3), // English only, no translation
 })
 
 // API query params — feed list
