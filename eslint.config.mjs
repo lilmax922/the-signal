@@ -9,12 +9,12 @@ export default withNuxt(antfu({
   typescript: true,
   formatters: true,
   ignores: [
-    'agents/**/*.md',
-    'context/**/*.md',
+    'agents/**',
+    'context/**',
     'pnpm-*',
     'tsconfig.json',
-    'server/database/migrations/*',
-    '.trigger/*',
+    'server/database/migrations/**',
+    '.trigger/**',
     'AGENTS.md',
   ],
 }, {
