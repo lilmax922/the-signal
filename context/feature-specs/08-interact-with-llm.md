@@ -1,6 +1,6 @@
 # Objective
 
-We need to call Free LLMs under the Trigger.dev task using the OpenRouter TypeScript SDK to generate de-nosing news content.
+We need to call Free LLMs under the Trigger.dev task using the OpenRouter TypeScript SDK to generate de-noising news content.
 
 The `@openrouter/sdk` package is already installed and api key is configured in the env file.
 
@@ -35,7 +35,7 @@ The `@openrouter/sdk` package is already installed and api key is configured in 
 
 ## Step 3 - Single LLM Call
 
-- Use `openrouter/typescript-sdk` in `trigger/refinary-agent.ts` to call LLM.
+- Use `openrouter/typescript-sdk` in `trigger/refinery-agent.ts` to call LLM.
 - Use `google/gemma-4-31b-it:free` model.
 - Use `buildPrompt` utility function to build the prompt for the LLM call.
 - Error handling with clear information:
@@ -49,6 +49,6 @@ The `@openrouter/sdk` package is already installed and api key is configured in 
 
 - The LLM output must match to `llmOutputSchema`.
 - Title and content should de-noise with no clickbait, repetitive phrasing and emotional adjectives.
-- Generate a maximum of 3 summaries.
-- Generate a maximum of 3 tags.
+- Summary must each contain exactly 3 items.
+- Tags must contain 1–3 items.
 - Translate into Traditional Chinese.

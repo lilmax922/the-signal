@@ -18,7 +18,7 @@ export const refineryAgentTask = schemaTask({
     const guid = payload.guid
     const pipelineRunId = ctx.run.id
 
-    logger.info('Refinery started', { guid: payload.guid, pipelineRunId })
+    logger.info('Refinery started', { guid, pipelineRunId })
 
     const extractedContent = await extractArticleContent(payload.sourceUrl)
 
@@ -36,12 +36,14 @@ export const refineryAgentTask = schemaTask({
             role: 'user',
             content: buildPrompt(payload.title, extractedContent),
           }],
+          temperature: 0.1,
         },
       })
 
       const responseText: string = response.choices?.[0]?.message?.content ?? ''
-
       llmOutput = llmOutputSchema.parse(JSON.parse(responseText))
+
+      logger.info('LLM output', { llmOutput })
     }
     catch (err) {
       logger.error('LLM call failed or returned invalid JSON', {

@@ -15,7 +15,7 @@ From the de-noised English content, extract:
     1. What happened (the core event or announcement)
     2. Key figures, numbers, or data points
     3. Impact or consequence stated in the article
-- tags: up to 3 named entities — company names, person names, or ticker symbols (e.g. Tesla, $TSLA, Elon Musk). Keep in original English. Do not translate.
+- tags: must contain 1–3 named entities — company names, person names, or ticker symbols (e.g. Tesla, TSLA, Elon Musk). Keep in original English. Do not translate.
 
 ## Stage 2 — Translate to Traditional Chinese (zh-TW)
 
