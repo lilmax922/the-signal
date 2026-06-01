@@ -6,6 +6,8 @@ import { llmOutputSchema } from '../shared/validators/llm'
 import { refineryPayloadSchema } from '../shared/validators/rss'
 import { buildPrompt } from './utils/build-prompt'
 import { extractArticleContent } from './utils/extractor'
+import { mirrorImage } from './utils/mirror-image'
+import { generateSlug } from './utils/slug'
 
 const openrouter = new OpenRouter({
   apiKey: env.OPENROUTER_API_KEY,
@@ -54,6 +56,18 @@ export const refineryAgentTask = schemaTask({
       throw err
     }
 
+    const slug = generateSlug(llmOutput.titleEn, payload.publishedAt)
+
+    let mirroredImageUrl: string | null = null
+    if (payload.imageUrl) {
+      try {
+        mirroredImageUrl = await mirrorImage(payload.imageUrl)
+      }
+      catch (err) {
+        logger.error('Image mirroring failed', { guid, pipelineRunId, err })
+      }
+    }
+
     return {
       guid,
       title: payload.title,
@@ -62,6 +76,8 @@ export const refineryAgentTask = schemaTask({
       contentLength: extractedContent.length,
       timestamp: new Date().toISOString(),
       llmOutput,
+      slug,
+      mirroredImageUrl,
     }
   },
 })

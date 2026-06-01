@@ -23,6 +23,7 @@
     "@nuxt/ui": "^4.7.1",
     "@nuxtjs/supabase": "2.0.9",
     "@openrouter/sdk": "^0.12.79",
+    "@supabase/supabase-js": "^2.106.1",
     "@trigger.dev/sdk": "^4.4.6",
     "@vueuse/core": "^14.3.0",
     "concurrently": "^10.0.0",
@@ -30,6 +31,7 @@
     "fast-xml-parser": "^5.8.0",
     "nuxt": "^4.4.4",
     "postgres": "^3.4.9",
+    "sharp": "^0.34.0",
     "tailwindcss": "^4.2.4",
     "undici": "^8.3.0",
     "zod": "^4.4.3"

@@ -107,8 +107,8 @@ Signal detail content is rendered in a Drawer (mobile) or Right-Side Pane (deskt
 
 4. **Article Extraction**: `@extractus/article-extractor` per URL. Quality gate: skip if extracted text < 200 characters.
 5. **Single LLM Call (OpenRouter)**: One prompt performs: de-noising, Traditional Chinese translation, entity tag extraction (max 3), 3-point summary. Output: validated JSON via Zod.
-6. **Slug Generation**: Slugify `title_en` + append `YYYY-MM-DD` from `published_at`. If collision exists in DB, append `-2`, `-3`, etc.
-7. **Media Mirroring**: Download image → upload to Supabase Storage → obtain public URL.
+6. **Slug Generation**: Slugify `title_en` + append `YYYYMMDD` from `published_at`. If collision exists in DB, append `-2`, `-3`, etc.
+7. **Image Mirroring**: Download image → re-encode as WebP via `sharp` (quality 80, capped at 1280 px width; falls back to quality 65 if the result still exceeds a 95 KB soft target) → upload to Supabase Storage → obtain public URL. If `sharp` throws (unrecognised format, etc.), the original bytes are uploaded unchanged.
 8. **Persistence**: Write `signal` row + upsert `tag` rows + write `signal_tag` rows.
 
 ### Stage 3 — Nitro Scheduled Task (1st of each month)

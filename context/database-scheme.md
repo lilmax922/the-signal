@@ -23,7 +23,7 @@ The core content table. Each row is one fully-processed Signal Card.
 | Column            | Type          | Constraints                                     | Description                                                              |
 | ----------------- | ------------- | ----------------------------------------------- | ------------------------------------------------------------------------ |
 | `id`              | `uuid`        | PK, default `gen_random_uuid()`                 | Unique internal identifier.                                              |
-| `slug`            | `text`        | UNIQUE, NOT NULL                                | URL-safe identifier. Format: `{slugified-title-en}-{YYYY-MM-DD}`. Used in all public-facing routes. |
+| `slug`            | `text`        | UNIQUE, NOT NULL                                | URL-safe identifier. Format: `{slugified-title-en}-{YYYYMMDD}`. Used in all public-facing routes. |
 | `guid`            | `text`        | UNIQUE, NOT NULL                                | `guid` from RSS metadata. Pipeline deduplication key only — never exposed in URLs. |
 | `category`        | `text`        | NOT NULL, CHECK IN (`finance`, `tech`, `world`) | Derived from the source RSS feed path.                                   |
 | `title_en`        | `text`        | NOT NULL                                        | De-noised English headline.                             |
@@ -79,12 +79,12 @@ No user-owned tables. `auth.users` is not referenced by any application table.
 Slugs are generated during Trigger.dev Stage 2, before DB persistence.
 
 1. Slugify `title_en`: lowercase, replace spaces and special characters with `-`, strip non-alphanumeric characters.
-2. Append `-{YYYY-MM-DD}` from `published_at`.
+2. Append `-{YYYYMMDD}` from `published_at`.
 3. Query DB for existing slug. If unique → use it.
 4. If collision → append `-2`, `-3`, up to `-10`.
 5. If still colliding after 10 attempts → log and discard the article.
 
-Example: `nvidia-announces-blackwell-ultra-gpu-2026-05-22`
+Example: `nvidia-announces-blackwell-ultra-gpu-20260522`
 
 ---
 
