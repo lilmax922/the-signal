@@ -32,7 +32,6 @@ The core content table. Each row is one fully-processed Signal Card.
 | `content_zh`      | `text`        | NOT NULL                                        | Translated Traditional Chinese body. Rendered in the UI.                 |
 | `summary_zh`      | `text[]`      | NOT NULL                                        | Exactly 3 Traditional Chinese bullet-point summary items.                |
 | `image_url`       | `text`        | nullable                                        | Supabase Storage public URL for the mirrored image.                      |
-| `image_alt`       | `text`        | nullable                                        | Alt text for the preview image.                                          |
 | `source_url`      | `text`        | NOT NULL                                        | Original article URL.                                                    |
 | `published_at`    | `timestamptz` | NOT NULL                                        | Publication timestamp from RSS.                                          |
 | `created_at`      | `timestamptz` | default `now()`                                 | Row creation timestamp.                                                  |
@@ -109,7 +108,6 @@ export const signal = pgTable('signal', {
   summaryEn:     text().array().notNull(),
   summaryZh:     text().array().notNull(),
   imageUrl:      text(),
-  imageAlt:      text(),
   sourceUrl:     text().notNull(),
   publishedAt:   timestamp({ withTimezone: true }).notNull(),
   createdAt:     timestamp({ withTimezone: true }).notNull().defaultNow(),
@@ -178,7 +176,6 @@ export const signalSchema = z.object({
   summaryEn:     z.array(z.string().min(1)).length(3),
   summaryZh:     z.array(z.string().min(1)).length(3),
   imageUrl:      z.string().url().nullable(),
-  imageAlt:      z.string().nullable(),
   sourceUrl:     z.string().url(),
   publishedAt:   z.string().datetime(),
   createdAt:     z.string().datetime().nullable(),

@@ -74,7 +74,6 @@ export const signal = pgTable('signal', {
   contentZh:     text().notNull(),
   summaryZh:     text().array().notNull(),
   imageUrl:      text(),
-  imageAlt:      text(),
   sourceUrl:     text().notNull(),
   publishedAt:   timestamp({ withTimezone: true }).notNull(),
   createdAt:     timestamp({ withTimezone: true }).notNull().defaultNow(),

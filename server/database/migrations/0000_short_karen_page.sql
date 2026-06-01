@@ -11,7 +11,6 @@ CREATE TABLE "signal" (
 	"summary_en" text[] NOT NULL,
 	"summary_zh" text[] NOT NULL,
 	"image_url" text,
-	"image_alt" text,
 	"source_url" text NOT NULL,
 	"published_at" timestamp with time zone NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
