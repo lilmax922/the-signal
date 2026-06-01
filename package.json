@@ -28,6 +28,7 @@
     "@vueuse/core": "^14.3.0",
     "concurrently": "^10.0.0",
     "drizzle-orm": "^0.45.2",
+    "drizzle-zod": "^0.8.3",
     "fast-xml-parser": "^5.8.0",
     "nuxt": "^4.4.4",
     "postgres": "^3.4.9",

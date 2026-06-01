@@ -1,3 +1,4 @@
+import type { z } from 'zod'
 import {
   index,
   pgEnum,
@@ -6,8 +7,9 @@ import {
   timestamp,
   uuid,
 } from 'drizzle-orm/pg-core'
+import { createInsertSchema } from 'drizzle-zod'
 
-export const categoryEnum = pgEnum('category', ['finance', 'tech', 'world'])
+const categoryEnum = pgEnum('category', ['finance', 'tech', 'world'])
 
 export const signal = pgTable('signal', {
   id: uuid().primaryKey().defaultRandom(),
@@ -30,3 +32,14 @@ export const signal = pgTable('signal', {
   index('idx_signal_category_published').on(t.category, t.publishedAt.desc()),
   index('idx_signal_published_at').on(t.publishedAt.desc()),
 ])
+
+export const InsertSignal = createInsertSchema(signal, {
+  summaryEn: schema => schema.length(3),
+  summaryZh: schema => schema.length(3),
+}).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+})
+
+export type InsertSignal = z.infer<typeof InsertSignal>

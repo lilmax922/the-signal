@@ -1,9 +1,11 @@
+import type { z } from 'zod'
 import {
   index,
   pgTable,
   primaryKey,
   uuid,
 } from 'drizzle-orm/pg-core'
+import { createInsertSchema } from 'drizzle-zod'
 import { signal } from './signal'
 import { tag } from './tag'
 
@@ -15,3 +17,7 @@ export const signalTag = pgTable('signal_tag', {
   index('idx_signal_tag_tag_id').on(t.tagId),
   primaryKey({ columns: [t.signalId, t.tagId] }),
 ])
+
+export const InsertSignalTag = createInsertSchema(signalTag)
+
+export type InsertSignalTag = z.infer<typeof InsertSignalTag>

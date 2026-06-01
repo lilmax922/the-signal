@@ -1,6 +1,10 @@
 import type { LlmOutput } from '../shared/validators/llm'
 import { OpenRouter } from '@openrouter/sdk'
 import { logger, schemaTask } from '@trigger.dev/sdk'
+import { db } from '../server/database'
+import { insertSignal } from '../server/database/queries/signal'
+import { insertSignalTag } from '../server/database/queries/signal-tag'
+import { insertTag } from '../server/database/queries/tag'
 import env from '../shared/env'
 import { llmOutputSchema } from '../shared/validators/llm'
 import { refineryPayloadSchema } from '../shared/validators/rss'
@@ -68,6 +72,48 @@ export const refineryAgentTask = schemaTask({
       }
     }
 
+    logger.info('Persisting signal, tags, and signal_tag rows', { guid, pipelineRunId })
+
+    const persisted = await db.transaction(async (tx) => {
+      const insertedSignal = await insertSignal({
+        slug,
+        guid: payload.guid,
+        category: payload.category,
+        titleEn: llmOutput.titleEn,
+        titleZh: llmOutput.titleZh,
+        contentEn: llmOutput.contentEn,
+        contentZh: llmOutput.contentZh,
+        summaryEn: llmOutput.summaryEn,
+        summaryZh: llmOutput.summaryZh,
+        imageUrl: mirroredImageUrl,
+        sourceUrl: payload.sourceUrl,
+        publishedAt: new Date(payload.publishedAt),
+        pipelineRunId,
+      }, tx)
+
+      const insertedTags = []
+      const insertedSignalTags = []
+      for (const name of llmOutput.tags) {
+        const insertedTag = await insertTag({ name }, tx)
+        insertedTags.push(insertedTag)
+        const junction = await insertSignalTag(
+          { signalId: insertedSignal.id, tagId: insertedTag.id },
+          tx,
+        )
+        insertedSignalTags.push(junction)
+      }
+
+      return { insertedSignal, insertedTags, insertedSignalTags }
+    })
+
+    logger.info('Persisted', {
+      guid,
+      pipelineRunId,
+      signalId: persisted.insertedSignal.id,
+      tagCount: persisted.insertedTags.length,
+      junctionCount: persisted.insertedSignalTags.length,
+    })
+
     return {
       guid,
       title: payload.title,
@@ -78,6 +124,7 @@ export const refineryAgentTask = schemaTask({
       llmOutput,
       slug,
       mirroredImageUrl,
+      persisted,
     }
   },
 })
