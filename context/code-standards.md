@@ -31,7 +31,7 @@
 
 ## Nuxt.js
 
-- Follow the Nuxt 4 `app/` directory structure. See https://nuxt.com/docs/4.x/directory-structure.
+- Follow the Nuxt `app/` directory structure. See https://nuxt.com/docs/4.x/directory-structure.
 - `shared/` is safe to import from both `app/` and `server/`.
 - `server/database/` must never be imported from `app/`.
 
@@ -50,11 +50,75 @@
 
 ## Routing
 
-- Signal detail is rendered at `/signal/[slug]`.
-- Opening a signal from the feed uses `router.push('/signal/[slug]')` — no full page reload.
-- Closing the detail view uses `router.push('/')` — no full page reload.
-- `app/pages/signal/[slug].vue` detects viewport size on mount and opens either the bottom drawer (mobile) or the Right-Side Pane (desktop).
-- Direct navigation to `/signal/[slug]` (e.g. from a shared link) must render the feed in the background with the signal detail open immediately.
+The Signal Feed uses Nuxt **nested routes** to implement the master-detail pattern. The feed layout is the **parent route** (`app/pages/[[category]].vue`) and the signal detail is a **child route** (`app/pages/[[category]]/[slug].vue`) rendered inside the parent's `<NuxtPage />` slot.
+
+### File Structure
+
+```
+app/pages/
+├── login.vue                       # /login
+├── confirm.vue                     # /confirm
+└── [[category]]/
+    ├── [slug].vue                  # Child route: detail modal
+    └── (parent handled by app/pages/[[category]].vue file)
+```
+
+> `[[category]]` is the Nuxt optional dynamic segment. **There is no `app/pages/index.vue`** — the parent optional route replaces it. A `[[category]]/` directory may or may not exist alongside the file; both layouts are equivalent in Nuxt.
+
+### URL Patterns
+
+| Scenario | URL |
+|---|---|
+| Root feed (no filter) | `/` |
+| Filtered feed | `/{category}` |
+| Signal detail | `/{category?}/{slug}` |
+
+### Navigation
+
+- **Open a signal from the feed**: `router.push(\`/\${category ?? ''}\${category ? '/' : ''}\${slug}\`)` — preserves the current category in the URL when present.
+- **Close the detail view**: `router.push(\`/\${category ?? ''}\`)` (or `router.push('/')` if there is no category).
+- **Never use `router.replace`** — it removes the previous history entry and breaks browser back navigation. Use `router.push` for both open and close.
+- The optional `category` segment, if present, must be validated against the category enum (`finance | tech | world`). Invalid values render a 404.
+
+### Constraints
+
+- The `[[category]].vue` parent component mounts **exactly once per browser session** and stays mounted for the entire session. The feed's reactive state lives in the parent. See `architecture.md` Invariant #9 ("Parent Route Mount Persistence").
+- The child `[slug].vue` is rendered in the parent's `<NuxtPage />` slot. It does not own any feed state.
+- Direct navigation to `/{category?}/{slug}` must render the parent + child together. SSR must produce a page that shows the feed in the background and the detail modal on top.
+- The parent template conditionally renders the modal wrapper based on the presence of `route.params.slug`:
+  ```vue
+  <div v-if="route.params.slug" class="fixed inset-0 z-50 ..." @click.self="closeDetail">
+    <NuxtPage />
+  </div>
+  ```
+- **Do not use `<KeepAlive>`** on the feed parent. The nested route pattern already guarantees the parent stays mounted. KeepAlive would be redundant and may cause subtle issues with the `<NuxtPage />` slot.
+
+## State Management
+
+Use Pinia stores for client-side reactive state that needs to outlive a single page component. `@pinia/nuxt` auto-imports stores from `app/stores/`.
+
+### Conventions
+
+- Store files live in `app/stores/` and use the `use*Store` naming pattern: `useSignalFeedStore`, `useSignalDetailStore`.
+- Each store defines its own state, getters, and actions. Components access state via `storeToRefs(store)` to preserve reactivity.
+- **The `[[category]].vue` parent route is the host of the feed store instance.** The store is created on first mount and persists for the session because the parent never unmounts.
+- The detail store is owned by the child `[slug].vue` route, but it reads its data independently of the feed (the child composable fetches `GET /api/signals/[slug]` rather than looking up the feed store).
+
+### Reference Shapes
+
+```ts
+// app/stores/use-signal-feed-store.ts
+useSignalFeedStore: {
+  state:   { items, cursor, isLoading, isLoadingMore, hasMore, error, category }
+  actions: { loadMore(), reset(), setCategory(c) }
+}
+
+// app/stores/use-signal-detail-store.ts
+useSignalDetailStore: {
+  state:   { signal, isLoading, notFound, error }
+  actions: { loadBySlug(slug), clear() }
+}
+```
 
 ## Styling
 
@@ -81,21 +145,25 @@
 ```
 app/
   components/
-    signal/         # Signal feed components (signal-card.vue, signal-feed.vue, etc.)
-    app/            # Reusable app-wide components (buttons, inputs, etc.)
-  composables/      # Client-side composables (use-*.ts)
+    signal/             # Signal components (signal-card.vue, signal-feed.vue, etc.)
+    app/                # Reusable app-wide components (buttons, inputs, etc.)
+  composables/          # Client-side composables (use-*.ts)
+  stores/               # Pinia stores (use-signal-feed-store.ts, use-signal-detail-store.ts)
   layouts/
   pages/
-    index.vue           # Feed page (/)
-    signal/
-      [slug].vue        # Signal detail page (/signal/[slug])
+    login.vue           # /login (existing)
+    confirm.vue         # /confirm (existing)
+    settings.vue        # /settings (existing)
+    [[category]]/
+      [slug].vue        # Child route: signal detail modal
+      # (parent handled by app/pages/[[category]].vue)
   assets/css/
     main.css            # OKLCH tokens, Tailwind config
 
 server/
   api/
     signals/
-      index.get.ts      # GET /api/signals (feed list)
+      index.get.ts      # GET /api/signals (signal list, cursor-paginated)
       [slug].get.ts     # GET /api/signals/[slug] (signal detail)
       search.get.ts     # GET /api/signals/search
   tasks/
@@ -121,6 +189,8 @@ shared/
   env.ts                # Environment variable definitions with validation
   validators/           # Zod schemas (signal.ts, etc.)
 ```
+
+> `app/pages/index.vue` does **not** exist. The optional dynamic parent `app/pages/[[category]].vue` replaces it. See the **Routing** section above.
 
 ## Agent Task Protocol
 

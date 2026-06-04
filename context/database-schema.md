@@ -114,8 +114,20 @@ export const signal = pgTable('signal', {
   updatedAt:     timestamp({ withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   pipelineRunId: text(),
 }, t => [
+  // Cursor pagination: composite (published_at, id) for `WHERE (published_at, id) < (?, ?)` lookups
+  index('idx_signal_published_at_id').on(t.publishedAt.desc(), t.id.desc()),
+
+  // Per-category partial indexes (filtered queries hit these instead of the full composite)
+  index('idx_signal_finance_published_at_id').on(t.publishedAt.desc(), t.id.desc())
+    .where(sql`${t.category} = 'finance'`),
+  index('idx_signal_tech_published_at_id').on(t.publishedAt.desc(), t.id.desc())
+    .where(sql`${t.category} = 'tech'`),
+  index('idx_signal_world_published_at_id').on(t.publishedAt.desc(), t.id.desc())
+    .where(sql`${t.category} = 'world'`),
+
+  // Legacy index retained for any non-cursor queries that filter by category only
   index('idx_signal_category_published').on(t.category, t.publishedAt.desc()),
-  index('idx_signal_published_at').on(t.publishedAt.desc()),
+
   check('signal_category_check', sql`${t.category} IN ('finance', 'tech', 'world')`),
 ])
 ```
@@ -193,10 +205,33 @@ export const llmOutputSchema = z.object({
 })
 
 // API query params — feed list
+// `cursor` is a base64-encoded `"{publishedAt-iso}|{id-uuid}"` returned by the previous page.
+// It is a wire format, never stored in the database.
 export const signalQuerySchema = z.object({
   category: categorySchema.optional(),
-  cursor:   z.string().uuid().optional(),
-  limit:    z.coerce.number().int().min(1).max(50).default(20),
+  cursor:   z.string().min(1).optional(),
+  limit:    z.coerce.number().int().min(1).max(50).default(10),  // FEED_PAGE_SIZE
+})
+
+// API response — feed list (lightweight card shape used by SignalFeed)
+export const signalFeedSchema = z.object({
+  id:          z.string().uuid(),
+  slug:        z.string().min(1),
+  titleZh:     z.string().min(1),
+  summaryZh:   z.array(z.string().min(1)).length(3),
+  imageUrl:    z.string().url().nullable(),
+  category:    categorySchema,
+  publishedAt: z.string().datetime(),
+  tags:        z.array(z.object({
+    id:   z.string().uuid(),
+    name: z.string().min(1),
+  })).max(3),
+})
+
+export const feedResponseSchema = z.object({
+  items:      z.array(signalFeedSchema),
+  nextCursor: z.string().nullable(),
+  hasMore:    z.boolean(),
 })
 
 // API query params — search
@@ -211,11 +246,64 @@ export const signalSearchSchema = z.object({
 ## Indexes
 
 ```sql
-CREATE INDEX        idx_signal_category_published ON signal (category, published_at DESC);
-CREATE INDEX        idx_signal_published_at     ON signal (published_at DESC);
-CREATE INDEX        idx_signal_tag_signal_id    ON signal_tag (signal_id);
-CREATE INDEX        idx_signal_tag_tag_id       ON signal_tag (tag_id);
+-- Cursor pagination: composite anchor for `WHERE (published_at, id) < (?, ?)` lookups
+CREATE INDEX idx_signal_published_at_id          ON signal (published_at DESC, id DESC);
+
+-- Per-category partial indexes (filtered feed queries hit these instead of the full composite)
+CREATE INDEX idx_signal_finance_published_at_id  ON signal (published_at DESC, id DESC) WHERE category = 'finance';
+CREATE INDEX idx_signal_tech_published_at_id     ON signal (published_at DESC, id DESC) WHERE category = 'tech';
+CREATE INDEX idx_signal_world_published_at_id    ON signal (published_at DESC, id DESC) WHERE category = 'world';
+
+-- Legacy index retained for any non-cursor queries that filter by category only
+CREATE INDEX idx_signal_category_published       ON signal (category, published_at DESC);
+
+-- signal_tag junction
+CREATE INDEX idx_signal_tag_signal_id            ON signal_tag (signal_id);
+CREATE INDEX idx_signal_tag_tag_id               ON signal_tag (tag_id);
 ```
+
+---
+
+## Cursor Pagination
+
+The Signal Feed uses **cursor-based pagination** to support infinite scroll with constant-time queries at any depth.
+
+### Cursor Format
+
+`base64({publishedAt-iso}|{id-uuid})` — a wire format produced by the server from the last row of each page and echoed back by the client on the next request. **The cursor is never stored in the database** — it lives only on the wire between consecutive requests.
+
+### Server Query (Postgres)
+
+```sql
+-- Filtered feed (with category)
+SELECT * FROM signal
+WHERE (published_at, id) < ($1, $2)
+  AND category = $3
+ORDER BY published_at DESC, id DESC
+LIMIT 10;
+
+-- Unfiltered feed (no category)
+SELECT * FROM signal
+WHERE (published_at, id) < ($1, $2)
+ORDER BY published_at DESC, id DESC
+LIMIT 10;
+```
+
+The composite index `(published_at DESC, id DESC)` lets Postgres seek directly to the cursor position without scanning the rows that have already been returned. The per-category partial indexes accelerate the filtered variants.
+
+### Cursor Encoding (Reference)
+
+```ts
+// Encode (server)
+const cursor = Buffer.from(`${row.publishedAt.toISOString()}|${row.id}`).toString('base64')
+
+// Decode (server, on next request)
+const [publishedAt, id] = Buffer.from(cursor, 'base64').toString('utf-8').split('|')
+```
+
+### Page Size
+
+The default page size is `10` (constant `FEED_PAGE_SIZE` in `shared/constants/limits.ts`). Page sizes above `50` are rejected by the API.
 
 ---
 

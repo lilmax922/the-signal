@@ -167,41 +167,62 @@ Cards use `rounded-2xl` with a subtle variant.
 - **Two-Column Feed**: `grid grid-cols-2 gap-6` with `max-w-7xl mx-auto` and `px-8`–`px-12` page margin.
 - **Intelligence Pane**: Right-side panel that opens when a card is selected. The feed narrows to a single column to accommodate it. Has `p-8` internal padding and a subtle left border. Closing the pane restores the two-column grid.
 
+> The feed and the detail pane are rendered together via Nuxt nested routes: the parent `app/pages/[[category]].vue` mounts once and hosts both the feed grid and the `<NuxtPage />` slot for the child detail route. Closing the pane unmounts only the child — the parent (and the feed) stays mounted.
+
 ---
 
 ## Interaction Principles
 
-### Opening Signal Detail
+### Opening Signal Detail (Nested Route)
 
-- Clicking a card triggers `router.push('/signal/[slug]')`. This updates the URL without a full page reload.
-- The appropriate detail component opens based on current viewport:
+The detail view is implemented as a child route (`app/pages/[[category]]/[slug].vue`) of the feed parent (`app/pages/[[category]].vue`).
+
+- Clicking a card triggers `router.push(\`/\${category ?? ''}\${category ? '/' : ''}\${slug}\`)`. This updates the URL without unmounting the feed parent.
+- The child route is rendered inside the parent's `<NuxtPage />` slot, positioned as a modal overlay.
+- The appropriate detail component renders based on the current viewport:
   - **Mobile** (`< 768px`): Bottom Drawer slides up to 90% viewport height.
-  - **Desktop** (`≥ 768px`): Intelligence Pane opens on the right, feed narrows to single column.
+  - **Desktop** (`≥ 768px`): Right-Side Pane with a subtle left border.
+- The feed's reactive state (items, scroll position, current category) is preserved because the parent component never unmounts.
 
 ### Direct Navigation & Shared Links
 
-- Navigating directly to `/signal/[slug]` (e.g. from a shared URL) renders the feed page in the background and immediately opens the signal detail using the same viewport-aware logic.
-- This is handled by `app/pages/signal/[slug].vue`, which on mount fetches the signal by slug via `GET /api/signals/[slug]` and opens the correct detail component.
-- If the slug does not exist, the page renders a 404 state without breaking the feed layout.
+- Navigating directly to `/{category?}/{slug}` (e.g. from a shared URL) renders the parent + child routes together. SSR produces a page that already shows the feed in the background and the detail modal on top. The recipient sees the same view as the sender on first paint.
+- The child route fetches the signal detail via `GET /api/signals/[slug]`. The parent route independently loads the feed in the background.
+- If the slug does not exist, the child renders a "Signal not found" state inside the modal slot — the feed remains intact in the background.
 
 ### Closing Signal Detail
 
-- Closing the drawer or pane triggers `router.push('/')`.
-- The feed restores scroll position to where it was before the detail was opened.
+- Closing the drawer or pane (via close button, backdrop click, or `Escape` key) triggers:
+  ```ts
+  const cat = route.params.category
+  router.push(typeof cat === 'string' && cat ? `/${cat}` : '/')
+  ```
+- The child `[slug].vue` unmounts. The parent remains mounted.
+- The feed's scroll position, current category, and accumulated items are all preserved. **No refetch occurs.**
+- The parent template conditionally renders the modal wrapper:
+  ```vue
+  <div v-if="route.params.slug" class="fixed inset-0 z-50 ...">
+    <NuxtPage />
+  </div>
+  ```
+- `document.body.style.overflow = 'hidden'` is applied while the modal is open to prevent background scroll; it is restored on close.
 
 ### Desktop: Right-Side Pane
-- Clicking elsewhere in the feed or pressing `Esc` closes the pane.
-- The expanded state is reflected in the URL (`/signal/[slug]`); closing returns to `/`.
+- The pane is rendered by the child route inside the parent's `<NuxtPage />` slot.
+- Clicking the backdrop or pressing `Esc` closes the pane by navigating back to the parent feed URL.
+- The expanded state is reflected in the URL (`/{category?}/{slug}`); closing returns to `/{category}` or `/`.
+- Clicking elsewhere in the feed (outside the pane) does not close the pane — only the explicit close affordances (backdrop, Esc, close button) do.
 
 ### Mobile: Bottom Drawer
 - Drawer content has `px-6 py-8` internal padding.
-- Dismissed via downward swipe or a close button; returns to exact feed scroll position.
+- Dismissed via downward swipe, a close button, or the `Escape` key (if a physical keyboard is attached).
+- The parent's scroll position is preserved exactly as it was when the drawer opened.
 
 ### Command Palette
 - Triggered by the search input or `⌘K`.
 - Searches signal titles, content, and entity tag names.
 - Results render as a compact list of Signal Card previews within the palette overlay.
-- Selecting a result navigates to `/signal/[slug]`.
+- Selecting a result navigates to the canonical signal URL (e.g. `/{slug}` — see "Canonical URL" in `architecture.md`). The detail modal opens in the current feed context (root or filtered).
 
 ### Avatar Dropdown (Desktop)
 - Clicking the avatar shows a dropdown with two items: **Settings** and **Logout**.

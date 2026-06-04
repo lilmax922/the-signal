@@ -60,8 +60,9 @@ Update the relevant context file whenever implementation changes affect:
 - **No third-party CDN URLs in DB**: images must be mirrored to Supabase Storage.
 - **Zod validation at every external boundary**: API inputs, LLM outputs, RSS payloads.
 - **Naming**: singular table names, `snake_case` columns, `camelCase` TS variables, `kebab-case` files.
-- **Slug as URL identifier**: public-facing routes and API endpoints use `slug`, never `id`.
+- **Slug + category as URL identifier**: public-facing routes use the nested route pattern `/{category?}/{slug}` (see `architecture.md` Routing & URL Model and Invariant #7). The `slug` is the canonical article identifier; the optional `category` segment constrains the background feed. API endpoints that take a single resource identifier use `slug`, never `id`.
 - **Slug uniqueness before persistence**: generate and verify slug uniqueness in Trigger.dev Stage 2 before any DB write.
+- **Parent route mount persistence**: the `[[category]].vue` parent route is mounted exactly once per browser session and hosts both the feed and the `<NuxtPage />` slot. Feed state lives in the parent (or a Pinia store initialised by the parent) and survives detail open/close. Do not use `<KeepAlive>` on the feed parent — the nested route pattern already guarantees persistence. See `architecture.md` Invariant #9.
 
 ## Before Moving to the Next Unit
 

@@ -9,24 +9,28 @@
 | Auth            | @nuxtjs/supabase + Supabase Auth    | Google & GitHub OAuth. Provides `useSupabaseUser()` / `useSupabaseClient()` on the client and `serverSupabaseClient()` / `serverSupabaseUser()` on the server. No custom user or profile table needed. |
 | Database        | Drizzle ORM + Supabase (PostgreSQL) | Type-safe data operations via Drizzle. Connects directly with the service role key — bypasses Supabase RLS entirely. All access control is enforced in the Nitro server layer. |
 | Storage         | Supabase Storage                    | Stores mirrored news preview images. Third-party CDN URLs (e.g. Yahoo) are never stored in the DB.                                                     |
+| State Management | Pinia (`@pinia/nuxt`)              | Client-side reactive state (feed items, detail, category). Stores are mounted in the `[[category]].vue` parent route and persist for the entire browser session — the parent never unmounts during detail open/close, so feed state survives without KeepAlive. |
 | AI Pipeline     | Trigger.dev + OpenRouter            | Trigger.dev: long-running background jobs (de-noising, translation, tagging, media mirroring, DB persistence). OpenRouter: LLM access (e.g. Gemma 9B). |
 | Scheduler       | Nitro Scheduled Tasks               | RSS ingestion at 08:00 and 20:00 daily. Monthly data purge on the 1st of each month. Lightweight I/O only — all heavy work is delegated to Trigger.dev. |
 | Package Manager | pnpm                                | Package manager for the project.                                                                                                                        |
 
-## Directory Structure (Nuxt 4)
+## Directory Structure (Nuxt)
 
 ```
 /
-├── app/                        # Client-side (Nuxt 4 app/ directory)
+├── app/                        # Client-side (Nuxt app/ directory)
 │   ├── components/
 │   │   ├── signal/             # Signal feed components
 │   │   └── app/                # Reusable app-wide components (buttons, inputs, etc.)
 │   ├── composables/            # Client-side Vue composables
+│   ├── stores/                 # Pinia stores (use-signal-feed-store.ts, use-signal-detail-store.ts)
 │   ├── layouts/
 │   ├── pages/
-│   │   ├── index.vue           # Feed page (/)
-│   │   └── signal/
-│   │       └── [slug].vue      # Signal detail page (/signal/[slug])
+│   │   ├── login.vue           # /login
+│   │   ├── confirm.vue         # /confirm
+│   │   └── [[category]]/
+│   │       ├── [slug].vue      # Child route: detail modal rendered in <NuxtPage />
+│   │       └── (parent handled by app/pages/[[category]].vue — see note below)
 │   └── assets/
 │       └── css/
 │           └── main.css        # OKLCH tokens, Tailwind config
@@ -54,6 +58,8 @@
 └── nuxt.config.ts
 ```
 
+> **Note on `[[category]]` route file**: The optional dynamic segment `[[category]]` in `app/pages/[[category]].vue` is the parent route that hosts the feed and the `<NuxtPage />` slot for the detail modal. There is **no** `app/pages/index.vue` — the parent optional route replaces it. A `[[category]]/` directory may or may not exist alongside the file; both layouts are equivalent in Nuxt.
+
 ## System Boundaries
 
 - `app/` — Presentation Layer: Client-side Vue pages, components, and composables. Uses `useSupabaseUser()` for auth state. Never accesses the DB directly.
@@ -71,18 +77,31 @@
 
 ## Routing & URL Model
 
-Signal detail content is rendered in a Drawer (mobile) or Right-Side Pane (desktop) without full page navigation. The URL is always updated to reflect the open signal so that shared links work correctly.
+The Signal Feed uses Nuxt **nested routes** to implement the master-detail pattern. The feed layout is the **parent route** (`app/pages/[[category]].vue`) and the signal detail is a **child route** (`app/pages/[[category]]/[slug].vue`) rendered inside the parent's `<NuxtPage />` slot as a modal overlay. The parent component mounts exactly once per browser session and is never unmounted during detail open/close — this preserves feed state (items, scroll position, current category) without needing `<KeepAlive>`.
+
+The URL is always updated to reflect the open signal so that shared links work correctly.
 
 | Scenario | URL | Behaviour |
 | --- | --- | --- |
-| Feed (no signal open) | `/` | Two-column feed, no pane/drawer. |
-| Signal open via feed click | `/signal/[slug]` | URL updated via `router.push` (no scroll reset). Drawer or pane opens in-place. |
-| User navigates directly to `/signal/[slug]` | `/signal/[slug]` | Feed renders in background; signal detail opens immediately based on viewport size — drawer on mobile, Right-Side Pane on desktop. |
-| User shares `/signal/[slug]` with another user | `/signal/[slug]` | Recipient lands on the same view: feed in background, signal detail open. |
+| Feed (no filter) | `/` | Parent route only. `route.params.category` is `undefined`. Two-column feed (desktop) or single-column (mobile). No modal. |
+| Feed (filtered) | `/{category}` | Parent route with `route.params.category = '{category}'`. Validated against the category enum. Two-column feed filtered to that category. No modal. |
+| Signal open (from feed) | `/{category?}/{slug}` | URL updated via `router.push`. Child `[slug].vue` mounts inside the parent's `<NuxtPage />` slot. Modal opens based on viewport: Bottom Drawer on mobile (`< 768px`), Right-Side Pane on desktop (`≥ 768px`). Parent stays mounted — no feed refetch. |
+| Direct nav to signal | `/{category?}/{slug}` | SSR renders parent + child together. Feed visible in background, modal visible on top. First paint matches the sender's view. |
+| User shares `/{category?}/{slug}` with another user | `/{category?}/{slug}` | Recipient lands on the same view: feed in background, signal detail modal open. |
+| Closing detail | — | `router.push('/{category}')` (or `router.push('/')` if no category). Child unmounts; parent stays mounted. Feed state, scroll position, and category are all preserved. **No refetch occurs.** |
 
-- Routing is handled by `app/pages/signal/[slug].vue`, which detects viewport size on mount and opens the appropriate detail component.
-- Closing the drawer/pane navigates back to `/` using `router.push('/')` (no full reload).
-- The `slug` is the canonical identifier for client-side routing. The API route `GET /api/signals/[slug]` resolves signal detail by slug.
+### URL Construction Rules
+
+- **Open from feed**: `router.push(\`/\${category ?? ''}\${category ? '/' : ''}\${slug}\`)`.
+- **Close detail**: `router.push(\`/\${category ?? ''}\`)` — pass `''` to route to `/` when the originating URL had no category.
+- **Never use `router.replace`** — it removes the previous history entry and breaks browser back navigation.
+- The optional `category` segment, if present, must be a valid category (`finance | tech | world`). Invalid values render a 404.
+
+### Canonical URL
+
+- The **canonical share URL** for a signal is the version without the category prefix (`/{slug}`), e.g. `/bitcoin-etf-20261105`.
+- When the recipient opens the canonical URL, the background feed is the root feed (all categories) and the detail modal is open.
+- Category-prefixed URLs (`/{category}/{slug}`) are valid and routable, but the canonical share should strip the prefix.
 
 ## Storage Model
 
@@ -94,6 +113,15 @@ Signal detail content is rendered in a Drawer (mobile) or Right-Side Pane (deskt
 - **Supabase Storage**:
   - Images are downloaded during pipeline execution and re-hosted here.
   - Only the Supabase public URL is stored in `signal.image_url`.
+
+### Cursor Pagination Indexes
+
+The feed uses **cursor-based pagination** (encoded as `base64({publishedAt}|{id})`) for infinite scroll. To make cursor queries `O(log n)` at any depth, the following indexes are required:
+
+- **Composite index** on `(published_at DESC, id DESC)` — supports the `WHERE (published_at, id) < (?, ?)` lookup that anchors each page after the first.
+- **Per-category partial indexes** on the same composite — accelerate filtered queries without paying the cost of scanning unrelated categories.
+
+Schema details live in `context/database-schema.md` (see the "Cursor Pagination" section).
 
 ## AI Pre-generation Workflow (The "Refinery" Pipeline)
 
@@ -132,5 +160,6 @@ Signal detail content is rendered in a Drawer (mobile) or Right-Side Pane (deskt
 4. **Single LLM Call per Article**: De-noising, translation, tag extraction, and summary must be batched into one OpenRouter request.
 5. **No User-Specific Storage**: No profile, saved signals, tracked tags, or email digest tables exist. User identity is provided entirely by `@nuxtjs/supabase`.
 6. **Server-Enforced Access Control**: Because RLS is disabled, every Nitro API route must verify session via `serverSupabaseUser()` before executing any DB query.
-7. **Slug as Canonical URL Identifier**: Every signal must have a unique slug before persistence. The slug is the sole identifier used in public-facing URLs and API routes.
+7. **Slug + Category as URL Identifier**: Every signal must have a unique slug before persistence. Public-facing URLs use the nested route pattern `/{category?}/{slug}` where the `slug` is the canonical article identifier and the optional `category` segment constrains the background feed. API endpoints that take a single resource identifier use `slug`, never `id`. The canonical share URL is the category-less form (`/{slug}`); the recipient lands with the root feed in the background.
 8. **Design Compliance**: All UI components must use the OKLCH tokens and spacing conventions in `ui-context.md`.
+9. **Parent Route Mount Persistence**: The `[[category]].vue` parent route is mounted exactly once per browser session. It hosts both the feed and the `<NuxtPage />` slot for the detail modal. Feed state, scroll position, and current category are preserved across detail open/close without `<KeepAlive>` — this is a framework guarantee, not a workaround. Any code that depends on the parent component being always present may rely on this invariant.
