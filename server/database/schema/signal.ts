@@ -1,4 +1,5 @@
 import type { z } from 'zod'
+import { sql } from 'drizzle-orm'
 import {
   index,
   pgEnum,
@@ -29,8 +30,16 @@ export const signal = pgTable('signal', {
   updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   pipelineRunId: text(),
 }, t => [
+  // Legacy: retained for non-cursor category-only queries (admin views, back-office tasks)
   index('idx_signal_category_published').on(t.category, t.publishedAt.desc()),
-  index('idx_signal_published_at').on(t.publishedAt.desc()),
+
+  // Cursor pagination: composite anchor for `WHERE (published_at, id) < (?, ?)` lookups
+  index('idx_signal_published_at_id').on(t.publishedAt.desc(), t.id.desc()),
+
+  // Per-category partial indexes: filtered feed queries hit these instead of the full composite
+  index('idx_signal_finance_published_at_id').on(t.publishedAt.desc(), t.id.desc()).where(sql`${t.category} = 'finance'`),
+  index('idx_signal_tech_published_at_id').on(t.publishedAt.desc(), t.id.desc()).where(sql`${t.category} = 'tech'`),
+  index('idx_signal_world_published_at_id').on(t.publishedAt.desc(), t.id.desc()).where(sql`${t.category} = 'world'`),
 ])
 
 export const InsertSignal = createInsertSchema(signal, {

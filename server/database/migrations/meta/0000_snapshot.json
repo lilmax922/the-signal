@@ -1,5 +1,5 @@
 {
-  "id": "707bc831-7b1d-49a1-9af2-1e3dbc3fbb03",
+  "id": "29a4d8c2-966b-4c62-add7-9b9d13d18d20",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -131,17 +131,89 @@
           "method": "btree",
           "with": {}
         },
-        "idx_signal_published_at": {
-          "name": "idx_signal_published_at",
+        "idx_signal_published_at_id": {
+          "name": "idx_signal_published_at_id",
           "columns": [
             {
               "expression": "published_at",
               "isExpression": false,
               "asc": false,
               "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
             }
           ],
           "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_signal_finance_published_at_id": {
+          "name": "idx_signal_finance_published_at_id",
+          "columns": [
+            {
+              "expression": "published_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"signal\".\"category\" = 'finance'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_signal_tech_published_at_id": {
+          "name": "idx_signal_tech_published_at_id",
+          "columns": [
+            {
+              "expression": "published_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"signal\".\"category\" = 'tech'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_signal_world_published_at_id": {
+          "name": "idx_signal_world_published_at_id",
+          "columns": [
+            {
+              "expression": "published_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"signal\".\"category\" = 'world'",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -309,17 +381,7 @@
       "isRLSEnabled": false
     }
   },
-  "enums": {
-    "public.category": {
-      "name": "category",
-      "schema": "public",
-      "values": [
-        "finance",
-        "tech",
-        "world"
-      ]
-    }
-  },
+  "enums": {},
   "schemas": {},
   "sequences": {},
   "roles": {},

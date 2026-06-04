@@ -37,6 +37,9 @@ CREATE TABLE "tag" (
 ALTER TABLE "signal_tag" ADD CONSTRAINT "signal_tag_signal_id_signal_id_fk" FOREIGN KEY ("signal_id") REFERENCES "public"."signal"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "signal_tag" ADD CONSTRAINT "signal_tag_tag_id_tag_id_fk" FOREIGN KEY ("tag_id") REFERENCES "public"."tag"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "idx_signal_category_published" ON "signal" USING btree ("category","published_at" DESC NULLS LAST);--> statement-breakpoint
-CREATE INDEX "idx_signal_published_at" ON "signal" USING btree ("published_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "idx_signal_published_at_id" ON "signal" USING btree ("published_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "idx_signal_finance_published_at_id" ON "signal" USING btree ("published_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "signal"."category" = 'finance';--> statement-breakpoint
+CREATE INDEX "idx_signal_tech_published_at_id" ON "signal" USING btree ("published_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "signal"."category" = 'tech';--> statement-breakpoint
+CREATE INDEX "idx_signal_world_published_at_id" ON "signal" USING btree ("published_at" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "signal"."category" = 'world';--> statement-breakpoint
 CREATE INDEX "idx_signal_tag_signal_id" ON "signal_tag" USING btree ("signal_id");--> statement-breakpoint
 CREATE INDEX "idx_signal_tag_tag_id" ON "signal_tag" USING btree ("tag_id");
