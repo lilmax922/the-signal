@@ -2,7 +2,7 @@ import type { RssItem } from '#shared/validators/rss'
 import type { Category } from '#shared/validators/signal'
 import { XMLParser } from 'fast-xml-parser'
 import { rawRssFeedSchema, rssItemSchema } from '#shared/validators/rss'
-import { CategorySchema } from '#shared/validators/signal'
+import { categorySchema } from '#shared/validators/signal'
 
 const RSS_URLS: Record<Category, string> = {
   finance: 'https://finance.yahoo.com/news/rssindex',
@@ -15,7 +15,7 @@ function extractGuid(guid: string | { '#text': string }): string {
 }
 
 export async function fetchRssFeed(category: Category): Promise<RssItem[]> {
-  const validatedCategory = CategorySchema.parse(category)
+  const validatedCategory = categorySchema.parse(category)
 
   const xml = await $fetch(RSS_URLS[validatedCategory], {
     headers: {

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { CategorySchema } from './signal'
+import { categorySchema } from './signal'
 
 export const rawRssItemSchema = z.object({
   'title': z.string().min(1),
@@ -26,9 +26,8 @@ export const rssItemSchema = z.object({
   sourceUrl: z.url(),
   publishedAt: z.iso.datetime(),
   imageUrl: z.url().nullable(),
-  category: CategorySchema,
+  category: categorySchema,
 })
-
 export type RssItem = z.infer<typeof rssItemSchema>
 
 export const refineryPayloadSchema = z.object({
@@ -37,7 +36,6 @@ export const refineryPayloadSchema = z.object({
   sourceUrl: z.url(),
   publishedAt: z.iso.datetime(),
   imageUrl: z.url().nullable(),
-  category: CategorySchema,
+  category: categorySchema,
 })
-
 export type RefineryPayload = z.infer<typeof refineryPayloadSchema>

@@ -1,5 +1,5 @@
 import type { z } from 'zod'
-import { sql } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import {
   index,
   pgEnum,
@@ -9,6 +9,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core'
 import { createInsertSchema } from 'drizzle-zod'
+import { signalTag } from './signal-tag'
 
 const categoryEnum = pgEnum('category', ['finance', 'tech', 'world'])
 
@@ -52,3 +53,7 @@ export const InsertSignal = createInsertSchema(signal, {
 })
 
 export type InsertSignal = z.infer<typeof InsertSignal>
+
+export const signalRelations = relations(signal, ({ many }) => ({
+  tags: many(signalTag),
+}))

@@ -60,6 +60,12 @@
       "sourceType": "github",
       "skillPath": "trigger-tasks/SKILL.md",
       "computedHash": "1f65ede75b8118f3b301ac41836b447808a6e188dbce44e2ed8cc161fb6a8b25"
+    },
+    "zod": {
+      "source": "pproenca/dot-skills",
+      "sourceType": "github",
+      "skillPath": "skills/.curated/zod/SKILL.md",
+      "computedHash": "c69b5133b65643317236707f2cd3e521b4fc6e5ee5fd6c6c00cf62a37dfd0144"
     }
   }
 }

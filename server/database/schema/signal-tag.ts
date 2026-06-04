@@ -1,4 +1,5 @@
 import type { z } from 'zod'
+import { relations } from 'drizzle-orm'
 import {
   index,
   pgTable,
@@ -21,3 +22,14 @@ export const signalTag = pgTable('signal_tag', {
 export const InsertSignalTag = createInsertSchema(signalTag)
 
 export type InsertSignalTag = z.infer<typeof InsertSignalTag>
+
+export const signalTagRelations = relations(signalTag, ({ one }) => ({
+  signal: one(signal, {
+    fields: [signalTag.signalId],
+    references: [signal.id],
+  }),
+  tag: one(tag, {
+    fields: [signalTag.tagId],
+    references: [tag.id],
+  }),
+}))

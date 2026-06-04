@@ -14,6 +14,8 @@
 | Scheduler       | Nitro Scheduled Tasks               | RSS ingestion at 08:00 and 20:00 daily. Monthly data purge on the 1st of each month. Lightweight I/O only — all heavy work is delegated to Trigger.dev. |
 | Package Manager | pnpm                                | Package manager for the project.                                                                                                                        |
 
+> **Cross-boundary alias bridging**: Nuxt's `#shared` alias is a Nuxt-time path mapping, but the trigger bundler (esbuild, run by the trigger.dev CLI) has no knowledge of it. Files under `server/database/*` use `#shared/...` imports (e.g. `findSignals`), so when the trigger bundle follows that import chain, esbuild cannot resolve the alias. A tiny custom esbuild plugin registered through the `build.extensions` API in `trigger.config.ts` translates `#shared[/...]` to the absolute `<root>/shared[/...].ts` path at resolve time. The plugin mirrors the Nuxt alias — any new shared alias added to `nuxt.config.ts` must be mirrored here. See the "Cross-boundary alias bridging" decision in `progress-tracker.md`.
+
 ## Directory Structure (Nuxt)
 
 ```
