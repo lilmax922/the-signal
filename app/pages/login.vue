@@ -44,14 +44,14 @@ const features = [
 
 const providers = [
   {
-    label: 'GitHub',
-    icon: 'i-simple-icons-github',
-    onClick: () => signInWithOAuth('github'),
-  },
-  {
     label: 'Google',
     icon: 'i-simple-icons-google',
     onClick: () => signInWithOAuth('google'),
+  },
+  {
+    label: 'GitHub',
+    icon: 'i-simple-icons-github',
+    onClick: () => signInWithOAuth('github'),
   },
 ]
 </script>
@@ -115,7 +115,7 @@ const providers = [
               :providers="providers"
             >
               <template #footer>
-                <p v-if="errorMessage" class="text-sm text-red-400 text-center">
+                <p v-if="errorMessage" class="text-sm text-error text-center">
                   {{ errorMessage }}
                 </p>
               </template>

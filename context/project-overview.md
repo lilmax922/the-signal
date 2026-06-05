@@ -33,7 +33,7 @@
 
 - Objective Truth Interface: A minimalist UI using OKLCH colors, strictly excluding emotional indicators.
 - Scan-First Cards: Signal Cards designed for comfortable reading, featuring AI-generated entity tags and a 3-point structured summary.
-- Two-Column Card Stream: A stable, rhythm-based two-column grid on desktop (single column on mobile) for effortless vertical scanning.
+- Three-Column Card Stream: A stable, rhythm-based grid — three columns on desktop, two on tablet, one on mobile — for effortless vertical scanning at every viewport.
 - Master-Detail Layout: Clicking a card opens the Right-Side Pane (desktop) or bottom drawer (mobile) over the feed. The URL updates to `/{category?}/{slug}` via a nested child route. Closing the modal returns to the parent feed URL.
 - Shareable Signal URLs: Every signal has a unique, human-readable URL. The canonical share URL is the version without a category prefix (i.e. `/{slug}`). When the recipient opens it, the background feed is the root feed (all categories).
 - Unified Command Palette: A central interface for searching facts and entities across all signals.

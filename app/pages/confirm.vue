@@ -5,9 +5,9 @@ definePageMeta({
 
 const user = useSupabaseUser()
 
-watch(user, (val) => {
-  if (val) {
-    navigateTo('/')
+watch(user, () => {
+  if (user.value) {
+    return navigateTo('/')
   }
 }, { immediate: true })
 

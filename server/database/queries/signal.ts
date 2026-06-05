@@ -2,7 +2,7 @@ import type { Category, FeedResponse } from '#shared/validators/signal'
 import type { DbClient } from '../index'
 import type { InsertSignal as InsertSignalType } from '../schema'
 import { Buffer } from 'node:buffer'
-import { and, eq, or, sql } from 'drizzle-orm'
+import { and, eq, lt, or } from 'drizzle-orm'
 import { z } from 'zod'
 import { feedResponseSchema } from '#shared/validators/signal'
 import { db } from '../index'
@@ -80,13 +80,15 @@ export async function findSignals(args: {
   const cursorRow = args.cursor ? decodeCursor(args.cursor) : null
 
   // Row-tuple cursor anchor — `or(...)` collapses to a single predicate so
-  // Postgres can use the composite index in one seek.
+  // Postgres can use the composite index in one seek. Uses Drizzle's `lt`/`eq`
+  // operators (not raw `sql` tags) so the Date value is bound to the column's
+  // encoder — the `postgres` driver rejects raw Date objects.
   const cursorPredicate = cursorRow
     ? or(
-        sql`${signal.publishedAt} < ${cursorRow.publishedAt}`,
+        lt(signal.publishedAt, cursorRow.publishedAt),
         and(
-          sql`${signal.publishedAt} = ${cursorRow.publishedAt}`,
-          sql`${signal.id} < ${cursorRow.id}`,
+          eq(signal.publishedAt, cursorRow.publishedAt),
+          lt(signal.id, cursorRow.id),
         ),
       )
     : undefined

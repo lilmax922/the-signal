@@ -127,18 +127,20 @@ A data terminal must never feel cramped. Generous spacing is a non-negotiable re
 
 ## Layout Patterns
 
-### Signal Feed: Two-Column Card Stream
+### Signal Feed: Three-Column Card Stream
 
-The primary feed layout is a **two-column card grid on desktop, single column on mobile**. This provides a stable, predictable visual rhythm — the eye moves in a straight vertical path without needing to re-orient for differently-sized blocks.
+The primary feed layout is a **three-column card grid on desktop (xl ≥ 1280px), two columns on tablet (md ≥ 768px), and a single column on mobile**. The dominant reading surface is the three-column desktop layout; the column count drops on narrower viewports so cards keep a comfortable measure and the eye does not have to re-orient for differently-sized blocks.
 
 ```
-Desktop (≥ 768px)               Mobile (< 768px)
-┌────────────┐ ┌────────────┐   ┌──────────────────┐
-│  [Image]   │ │  [Image]   │   │     [Image]       │
-│  Title     │ │  Title     │   │  Title            │
-│  Summary   │ │  Summary   │   │  Summary          │
-│  Tags Time │ │  Tags Time │   │  Tags        Time │
-└────────────┘ └────────────┘   └──────────────────┘
+Desktop (xl ≥ 1280px)              Tablet (md ≥ 768px)               Mobile (< 768px)
+┌──────┐ ┌──────┐ ┌──────┐        ┌────────┐ ┌────────┐              ┌──────────────────┐
+│ Card │ │ Card │ │ Card │        │  Card  │ │  Card  │              │      Card         │
+│  #1  │ │  #2  │ │  #3  │        │   #1   │ │   #2   │              │  Title            │
+└──────┘ └──────┘ └──────┘        └────────┘ └────────┘              │  Summary          │
+┌──────┐ ┌──────┐ ┌──────┐                                            │  Tags        Time │
+│ Card │ │ Card │ │ Card │                                            └──────────────────┘
+│  #4  │ │  #5  │ │  #6  │
+└──────┘ └──────┘ └──────┘
 ```
 
 **Card anatomy (top to bottom):**
@@ -164,8 +166,8 @@ Cards use `rounded-2xl` with a subtle variant.
 
 - **Header**: Fixed full-width top bar. Application title anchored left, centered search input with `⌘K` hint, user avatar anchored right.
 - **Category Filter Rail**: Pinned to the top of the content workspace, always visible above the feed.
-- **Two-Column Feed**: `grid grid-cols-2 gap-6` with `max-w-7xl mx-auto` and `px-8`–`px-12` page margin.
-- **Intelligence Pane**: Right-side panel that opens when a card is selected. The feed narrows to a single column to accommodate it. Has `p-8` internal padding and a subtle left border. Closing the pane restores the two-column grid.
+- **Three-Column Feed**: `grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-10` with `max-w-7xl mx-auto`, `px-4 md:px-8 lg:px-12` page margin, and `pb-16` bottom padding (so the end-of-feed marker and the mobile bottom navbar do not crash into the last row). Card geometry stays identical across breakpoints.
+- **Intelligence Pane**: Right-side panel that opens when a card is selected. The feed narrows to a single column to accommodate it. Has `p-8` internal padding and a subtle left border. Closing the pane restores the three-column grid.
 
 > The feed and the detail pane are rendered together via Nuxt nested routes: the parent `app/pages/[[category]].vue` mounts once and hosts both the feed grid and the `<NuxtPage />` slot for the child detail route. Closing the pane unmounts only the child — the parent (and the feed) stays mounted.
 
