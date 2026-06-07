@@ -1,13 +1,21 @@
 import type { Signal } from '#shared/validators/signal'
 import { findSignalBySlug } from '~~/server/database/queries/signal'
 import { signalSchema } from '#shared/validators/signal'
+// DEV-AUTH-DISABLED: import 與 session 驗證已停用。
+// 重新啟用:取消下方 /* … */ 區塊的註解,並恢復 import。
+/*
+// DEV-AUTH-DISABLED: see header comment above
 import { serverSupabaseUser } from '#supabase/server'
+*/
 
 export default defineEventHandler(async (event): Promise<Signal> => {
+  // DEV-AUTH-DISABLED: 未登入請求不再回傳 401。
+  /*
   const user = await serverSupabaseUser(event)
   if (!user) {
     throw createError({ statusCode: 401, statusMessage: 'unauthorized' })
   }
+  */
 
   const slug = getRouterParam(event, 'slug')
   if (!slug) {

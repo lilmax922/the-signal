@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { useScrollCollapse } from '~/composables/use-scroll-collapse'
 
+// DEV-AUTH-DISABLED: Supabase user/client 與 dropdown menu 已停用。
+// 重新啟用:取消下方 /* … */ 區塊的註解,並還原 <template> 中的 UDropdownMenu。
+/*
+// DEV-AUTH-DISABLED: see header comment above
 const user = useSupabaseUser()
 const supabase = useSupabaseClient()
 
@@ -36,6 +40,7 @@ const userMenuItems = computed(() => [
     },
   ],
 ])
+*/
 
 const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 10, minScrollY: 60 })
 </script>
@@ -64,16 +69,16 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
         </div>
       </div>
 
+      <!-- DEV-AUTH-DISABLED: 原本的 UDropdownMenu + 頭像已替換為 disabled 佔位按鈕,維持 header 寬度。 -->
       <div class="flex items-center">
-        <UDropdownMenu :items="userMenuItems">
-          <UButton variant="ghost" color="neutral">
-            <UAvatar
-              :src="avatarUrl"
-              icon="i-lucide:user"
-              size="sm"
-            />
-          </UButton>
-        </UDropdownMenu>
+        <UButton
+          variant="ghost"
+          color="neutral"
+          disabled
+          aria-label="登入功能已停用"
+        >
+          <UAvatar icon="i-lucide:user" size="sm" />
+        </UButton>
       </div>
     </div>
 

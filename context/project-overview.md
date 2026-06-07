@@ -17,8 +17,8 @@
 2. Discovery & Exploration: Users browse the Global Signal Feed. The default view shows all categories. Users can filter by a pre-defined category (Tech, World, Finance) via the Category Filter Rail.
 3. Search: Users use the **Semantic Command Palette** to search for specific entities or topics (e.g., "NVIDIA").
 4. Fact Scanning: Users scan structured Signal Cards in the feed, focusing on core facts and data points without emotional guidance.
-5. Context-Preserving Deep Dive: User clicks a card to open a bottom drawer (Mobile) or right-side pane (Desktop). The URL updates to `/{category?}/{slug}` — shareable. The detail renders as a child route inside the feed layout's `<NuxtPage />` slot, so the feed remains visible in the background and is not refetched.
-6. Shared Link: A user who receives a `/{category?}/{slug}` URL lands directly on the same view — feed in background, detail modal open — without any extra navigation step.
+5. Context-Preserving Deep Dive: User clicks a card to open a bottom drawer (Mobile) or right-side pane (Desktop). The URL updates to `?signal={slug}` — shareable. The detail renders as a sibling overlay component over the feed layout, so the feed remains visible in the background and is not refetched.
+6. Shared Link: A user who receives a `/signal/{slug}` URL lands directly on the SSR detail page — full content visible on first paint, no extra navigation step.
 
 ## Features
 
@@ -34,8 +34,8 @@
 - Objective Truth Interface: A minimalist UI using OKLCH colors, strictly excluding emotional indicators.
 - Scan-First Cards: Signal Cards designed for comfortable reading, featuring AI-generated entity tags and a 3-point structured summary.
 - Three-Column Card Stream: A stable, rhythm-based grid — three columns on desktop, two on tablet, one on mobile — for effortless vertical scanning at every viewport.
-- Master-Detail Layout: Clicking a card opens the Right-Side Pane (desktop) or bottom drawer (mobile) over the feed. The URL updates to `/{category?}/{slug}` via a nested child route. Closing the modal returns to the parent feed URL.
-- Shareable Signal URLs: Every signal has a unique, human-readable URL. The canonical share URL is the version without a category prefix (i.e. `/{slug}`). When the recipient opens it, the background feed is the root feed (all categories).
+- Master-Detail Layout: Clicking a card opens the Right-Side Pane (desktop) or bottom drawer (mobile) over the feed. The URL updates to `?signal={slug}` via a query param. Closing the overlay returns to the feed URL.
+- Shareable Signal URLs: Every signal has a unique, human-readable URL. The canonical share URL is the SSR page `/signal/{slug}`. When the recipient opens it, they see the full detail page.
 - Unified Command Palette: A central interface for searching facts and entities across all signals.
 
 ## Scope
@@ -46,7 +46,7 @@
 - AI Pipeline for de-noising, translation, and structured summarization.
 - Nuxt-based full-stack web application with a focus on Mobile-first responsive design.
 - Supabase integration for Auth, PostgreSQL storage, and image hosting.
-- Semantic, shareable signal URLs (`/{category?}/{slug}` via nested routes) with direct deep-link support.
+- Semantic, shareable signal URLs (`?signal={slug}` for in-app navigation, `/signal/{slug}` SSR page for crawlers and direct links).
 - Automatic purging of signals older than 3 months to maintain database hygiene.
 
 ### Out of Scope
@@ -63,6 +63,6 @@
 2. The AI successfully reduces raw article word counts by at least 50% while retaining all critical objective data.
 3. User can understand the core signal of an article within 15 seconds.
 4. AI output must be strictly factual — no fabricated data, no emotional language.
-5. Clicking a signal updates the URL to `/{category?}/{slug}` and opens the detail modal in-place without unmounting the feed layout.
-6. Navigating directly to `/{category?}/{slug}` renders the feed with the signal detail modal open immediately.
+5. Clicking a signal updates the URL to `?signal={slug}` and opens the detail overlay in-place without unmounting the feed layout.
+6. Navigating directly to `/signal/{slug}` renders the full detail page immediately via SSR.
 7. Signals older than 3 months are automatically purged from the database.

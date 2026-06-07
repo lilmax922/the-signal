@@ -167,57 +167,57 @@ Cards use `rounded-2xl` with a subtle variant.
 - **Header**: Fixed full-width top bar. Application title anchored left, centered search input with `⌘K` hint, user avatar anchored right.
 - **Category Filter Rail**: Pinned to the top of the content workspace, always visible above the feed.
 - **Three-Column Feed**: `grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-10` with `max-w-7xl mx-auto`, `px-4 md:px-8 lg:px-12` page margin, and `pb-16` bottom padding (so the end-of-feed marker and the mobile bottom navbar do not crash into the last row). Card geometry stays identical across breakpoints.
-- **Intelligence Pane**: Right-side panel that opens when a card is selected. The feed narrows to a single column to accommodate it. Has `p-8` internal padding and a subtle left border. Closing the pane restores the three-column grid.
+- **Intelligence Pane**: Right-side panel (USlideover) that opens when a card is selected. The feed remains visible in the background — no layout reflow. Has `p-8` internal padding and a subtle left border. Closing the pane restores the original view.
 
-> The feed and the detail pane are rendered together via Nuxt nested routes: the parent `app/pages/[[category]].vue` mounts once and hosts both the feed grid and the `<NuxtPage />` slot for the child detail route. Closing the pane unmounts only the child — the parent (and the feed) stays mounted.
+> The feed and the detail overlay are rendered together via the parent `app/pages/[[category]].vue`: the parent mounts once and hosts both the feed grid and the `signal-detail-overlay.vue` component. Closing the overlay unmounts only the overlay — the parent (and the feed) stays mounted.
 
 ---
 
 ## Interaction Principles
 
-### Opening Signal Detail (Nested Route)
+### Opening Signal Detail (Query-Based Overlay)
 
-The detail view is implemented as a child route (`app/pages/[[category]]/[slug].vue`) of the feed parent (`app/pages/[[category]].vue`).
+The detail view is implemented as a sibling overlay component (`signal-detail-overlay.vue`) rendered by the feed parent (`app/pages/[[category]].vue`).
 
-- Clicking a card triggers `router.push(\`/\${category ?? ''}\${category ? '/' : ''}\${slug}\`)`. This updates the URL without unmounting the feed parent.
-- The child route is rendered inside the parent's `<NuxtPage />` slot, positioned as a modal overlay.
-- The appropriate detail component renders based on the current viewport:
-  - **Mobile** (`< 768px`): Bottom Drawer slides up to 90% viewport height.
-  - **Desktop** (`≥ 768px`): Right-Side Pane with a subtle left border.
+- Clicking a card triggers `router.push({ query: { ...route.query, signal: slug } })`. This adds the signal query param without unmounting the feed parent.
+- The parent reads `route.query.signal` and conditionally renders `<SignalDetailOverlay :slug="activeSlug" />`.
+- The overlay component determines the viewport and renders the appropriate chrome:
+  - **Mobile** (`< 1024px`): Bottom Drawer slides up to 90% viewport height.
+  - **Desktop** (`≥ 1024px`): Right-Side Pane slides in from the right.
 - The feed's reactive state (items, scroll position, current category) is preserved because the parent component never unmounts.
 
 ### Direct Navigation & Shared Links
 
-- Navigating directly to `/{category?}/{slug}` (e.g. from a shared URL) renders the parent + child routes together. SSR produces a page that already shows the feed in the background and the detail modal on top. The recipient sees the same view as the sender on first paint.
-- The child route fetches the signal detail via `GET /api/signals/[slug]`. The parent route independently loads the feed in the background.
-- If the slug does not exist, the child renders a "Signal not found" state inside the modal slot — the feed remains intact in the background.
+- Navigating directly to `/signal/{slug}` (e.g. from a shared URL) renders the standalone SSR detail page. The page shows the full signal content on first paint — the feed is not shown.
+- The SSR page (`app/pages/signal/[slug].vue`) fetches the signal detail via `GET /api/signals/[slug]` server-side. It renders `<SignalDetail>` with a back link to `/`.
+- For in-app navigation, clicking a card pushes `?signal=slug` as a query param. The overlay opens over the feed.
+- If the slug does not exist, the overlay or SSR page renders a "載入失敗" error state.
 
 ### Closing Signal Detail
 
 - Closing the drawer or pane (via close button, backdrop click, or `Escape` key) triggers:
   ```ts
-  const cat = route.params.category
-  router.push(typeof cat === 'string' && cat ? `/${cat}` : '/')
+  router.push({ query: { signal: undefined } })
   ```
-- The child `[slug].vue` unmounts. The parent remains mounted.
+- The overlay closes. The parent remains mounted.
 - The feed's scroll position, current category, and accumulated items are all preserved. **No refetch occurs.**
-- The parent template conditionally renders the modal wrapper:
+- The parent conditionally renders the overlay:
   ```vue
-  <div v-if="route.params.slug" class="fixed inset-0 z-50 ...">
-    <NuxtPage />
-  </div>
+  <SignalDetailOverlay v-if="activeSlug" :slug="activeSlug" />
   ```
-- `document.body.style.overflow = 'hidden'` is applied while the modal is open to prevent background scroll; it is restored on close.
+- The overlay handles its own `v-model:open` state and calls `router.push` on close via the `removeSignalFromUrl` function.
 
 ### Desktop: Right-Side Pane
-- The pane is rendered by the child route inside the parent's `<NuxtPage />` slot.
-- Clicking the backdrop or pressing `Esc` closes the pane by navigating back to the parent feed URL.
-- The expanded state is reflected in the URL (`/{category?}/{slug}`); closing returns to `/{category}` or `/`.
+- The pane is rendered by `signal-detail-overlay.vue` using USlideover (Reka UI Dialog).
+- Clicking the backdrop or pressing `Esc` closes the pane by calling `router.push({ query: { signal: undefined } })`.
+- The expanded state is reflected in the URL (`?signal={slug}`); closing removes the query param.
 - Clicking elsewhere in the feed (outside the pane) does not close the pane — only the explicit close affordances (backdrop, Esc, close button) do.
 
 ### Mobile: Bottom Drawer
 - Drawer content has `px-6 py-8` internal padding.
+- Rendered by `signal-detail-overlay.vue` using UDrawer (vaul-vue).
 - Dismissed via downward swipe, a close button, or the `Escape` key (if a physical keyboard is attached).
+- Closing triggers `router.push({ query: { signal: undefined } })` to remove the signal query param.
 - The parent's scroll position is preserved exactly as it was when the drawer opened.
 
 ### Command Palette

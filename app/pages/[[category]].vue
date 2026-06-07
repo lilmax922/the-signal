@@ -6,20 +6,14 @@ const route = useRoute()
 
 const category = computed<Category | undefined>(() => {
   const c = route.params.category
-  if (c === undefined || c === '')
+  const candidate = typeof c === 'string' && c !== ''
+    ? c
+    : (typeof route.params.slug === 'string' ? route.params.slug : undefined)
+  if (candidate === undefined || candidate === '')
     return undefined
-  if (typeof c !== 'string') {
-    throw createError({
-      statusCode: 404,
-      statusMessage: 'invalid category',
-    })
-  }
-  const parsed = categorySchema.safeParse(c)
+  const parsed = categorySchema.safeParse(candidate)
   if (!parsed.success) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: 'invalid category',
-    })
+    return undefined
   }
   return parsed.data
 })
@@ -29,11 +23,15 @@ const feedKey = computed(() => `signal-feed-${category.value ?? 'all'}`)
 const { data, status, refresh } = await useFetch<FeedResponse>('/api/signals', {
   key: feedKey,
   query: computed(() => ({ category: category.value })),
+  // DEV-AUTH-DISABLED: 401 自動跳轉已停用,改為單純忽略錯誤。
+  // 重新啟用:取消下方 /* … */ 區塊的註解。
+  /*
   onResponseError({ response }) {
     if (response.status === 401) {
       navigateTo('/login')
     }
   },
+  */
 })
 
 const items = ref<SignalFeed[]>([])
@@ -76,6 +74,11 @@ async function loadMore(): Promise<void> {
 
 const isLoading = computed(() => status.value === 'pending')
 const hasError = computed(() => status.value === 'error')
+
+const activeSlug = computed(() => {
+  const s = route.query.signal
+  return typeof s === 'string' && s !== '' ? s : null
+})
 </script>
 
 <template>
@@ -87,9 +90,15 @@ const hasError = computed(() => status.value === 'error')
         isLoadingMore,
         hasMore,
         error: hasError,
+        category,
       }"
       @load-more="loadMore"
       @retry="() => refresh()"
+    />
+
+    <SignalDetailOverlay
+      v-if="activeSlug"
+      :slug="activeSlug"
     />
   </div>
 </template>

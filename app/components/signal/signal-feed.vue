@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SignalFeed } from '#shared/validators/signal'
+import type { Category, SignalFeed } from '#shared/validators/signal'
 import { useIntersectionObserver } from '@vueuse/core'
 
 const props = defineProps<{
@@ -8,6 +8,7 @@ const props = defineProps<{
   isLoadingMore: boolean
   hasMore: boolean
   error: boolean
+  category?: Category
 }>()
 
 const emit = defineEmits<{
@@ -90,6 +91,7 @@ useIntersectionObserver(
         v-for="item in items"
         :key="item.id"
         :signal="item"
+        :category="category"
       />
 
       <!-- IntersectionObserver sentinel — only present while more pages exist -->

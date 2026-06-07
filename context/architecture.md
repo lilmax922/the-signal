@@ -22,17 +22,20 @@
 /
 ├── app/                        # Client-side (Nuxt app/ directory)
 │   ├── components/
-│   │   ├── signal/             # Signal feed components
+│   │   ├── signal/             # Signal feed + detail components
+│   │   │   ├── signal-card.vue
+│   │   │   ├── signal-feed.vue
+│   │   │   ├── signal-detail.vue            # Pure rendering (no chrome)
+│   │   │   └── signal-detail-overlay.vue    # USlideover (desktop) / UDrawer (mobile)
 │   │   └── app/                # Reusable app-wide components (buttons, inputs, etc.)
 │   ├── composables/            # Client-side Vue composables
-│   ├── stores/                 # Pinia stores (use-signal-feed-store.ts, use-signal-detail-store.ts)
 │   ├── layouts/
 │   ├── pages/
 │   │   ├── login.vue           # /login
 │   │   ├── confirm.vue         # /confirm
-│   │   └── [[category]]/
-│   │       ├── [slug].vue      # Child route: detail modal rendered in <NuxtPage />
-│   │       └── (parent handled by app/pages/[[category]].vue — see note below)
+│   │   ├── [[category]].vue    # Feed parent route (hosts overlay)
+│   │   └── signal/
+│   │       └── [slug].vue      # SSR detail page for crawlers / direct links
 │   └── assets/
 │       └── css/
 │           └── main.css        # OKLCH tokens, Tailwind config
@@ -54,13 +57,13 @@
 ├── shared/                     # Code shared between app/ and server/
 │   ├── types/                  # TypeScript interfaces (signal.ts, tag.ts, etc.)
 │   ├── constants/              # Shared constants (categories, limits, etc.)
-│   ├── env.ts                    # Global environment variable definitions with validation
+│   ├── env.ts                  # Global environment variable definitions with validation
 │   └── validators/             # Zod schemas
 ├── public/
 └── nuxt.config.ts
 ```
 
-> **Note on `[[category]]` route file**: The optional dynamic segment `[[category]]` in `app/pages/[[category]].vue` is the parent route that hosts the feed and the `<NuxtPage />` slot for the detail modal. There is **no** `app/pages/index.vue` — the parent optional route replaces it. A `[[category]]/` directory may or may not exist alongside the file; both layouts are equivalent in Nuxt.
+> **Note on `[[category]]` route file**: The optional dynamic segment `[[category]]` in `app/pages/[[category]].vue` is the parent route that hosts the feed and the signal detail overlay. There is **no** `app/pages/index.vue` — the parent optional route replaces it. The overlay (`signal-detail-overlay.vue`) is a sibling component rendered by the parent, not a child route.
 
 ## System Boundaries
 
@@ -79,31 +82,33 @@
 
 ## Routing & URL Model
 
-The Signal Feed uses Nuxt **nested routes** to implement the master-detail pattern. The feed layout is the **parent route** (`app/pages/[[category]].vue`) and the signal detail is a **child route** (`app/pages/[[category]]/[slug].vue`) rendered inside the parent's `<NuxtPage />` slot as a modal overlay. The parent component mounts exactly once per browser session and is never unmounted during detail open/close — this preserves feed state (items, scroll position, current category) without needing `<KeepAlive>`.
+The Signal Feed uses a **query-based overlay** pattern. The feed layout is the parent route (`app/pages/[[category]].vue`) and the signal detail is a sibling overlay component (`signal-detail-overlay.vue`) rendered conditionally when a `?signal=slug` query param is present. The parent component mounts exactly once per browser session and is never unmounted during detail open/close — this preserves feed state (items, scroll position, current category) without needing `<KeepAlive>`.
+
+A separate SSR page at `/signal/[slug]` serves crawlers and direct links.
 
 The URL is always updated to reflect the open signal so that shared links work correctly.
 
 | Scenario | URL | Behaviour |
 | --- | --- | --- |
-| Feed (no filter) | `/` | Parent route only. `route.params.category` is `undefined`. Two-column feed (desktop) or single-column (mobile). No modal. |
-| Feed (filtered) | `/{category}` | Parent route with `route.params.category = '{category}'`. Validated against the category enum. Two-column feed filtered to that category. No modal. |
-| Signal open (from feed) | `/{category?}/{slug}` | URL updated via `router.push`. Child `[slug].vue` mounts inside the parent's `<NuxtPage />` slot. Modal opens based on viewport: Bottom Drawer on mobile (`< 768px`), Right-Side Pane on desktop (`≥ 768px`). Parent stays mounted — no feed refetch. |
-| Direct nav to signal | `/{category?}/{slug}` | SSR renders parent + child together. Feed visible in background, modal visible on top. First paint matches the sender's view. |
-| User shares `/{category?}/{slug}` with another user | `/{category?}/{slug}` | Recipient lands on the same view: feed in background, signal detail modal open. |
-| Closing detail | — | `router.push('/{category}')` (or `router.push('/')` if no category). Child unmounts; parent stays mounted. Feed state, scroll position, and category are all preserved. **No refetch occurs.** |
+| Feed (no filter) | `/` | Parent route only. `route.params.category` is `undefined`. Three-column feed (desktop), two-column (tablet), single-column (mobile). No overlay. |
+| Feed (filtered) | `/{category}` | Parent route with `route.params.category = '{category}'`. Validated against the category enum. Feed filtered to that category. No overlay. |
+| Signal open (from feed) | `/?signal={slug}` or `/{category}?signal={slug}` | URL updated via `router.push`. Parent reads `route.query.signal` and renders `<SignalDetailOverlay :slug="slug" />`. Overlay opens as USlideover (desktop ≥1024px) or UDrawer (mobile <1024px). Parent stays mounted — no feed refetch. |
+| Direct nav to signal | `/signal/{slug}` | SSR renders the standalone detail page. Full content visible on first paint. Close button navigates to `/`. |
+| User shares `?signal={slug}` URL | `/?signal={slug}` or `/{category}?signal={slug}` | Recipient lands on the same view: feed in background, signal detail overlay open. |
+| Closing detail | — | `router.push` removing the `?signal` query param (e.g. `router.push({ query: { signal: undefined } })`). Overlay closes. Parent stays mounted. Feed state, scroll position, and category are all preserved. **No refetch occurs.** |
 
 ### URL Construction Rules
 
-- **Open from feed**: `router.push(\`/\${category ?? ''}\${category ? '/' : ''}\${slug}\`)`.
-- **Close detail**: `router.push(\`/\${category ?? ''}\`)` — pass `''` to route to `/` when the originating URL had no category.
-- **Never use `router.replace`** — it removes the previous history entry and breaks browser back navigation.
-- The optional `category` segment, if present, must be a valid category (`finance | tech | world`). Invalid values render a 404.
+- **Open from feed**: `router.push({ query: { ...route.query, signal: slug } })` — preserves existing query params (e.g. category filter).
+- **Close detail**: `router.push({ query: { signal: undefined } })` — removes the signal query param, creates a history entry so browser back/forward works.
+- **Never use `router.replace`** — it removes the previous history entry and breaks browser back navigation. Both open and close must use `router.push`.
+- The overlay is triggered by `route.query.signal` being a non-empty string. The parent reads this and passes it as a prop to `<SignalDetailOverlay>`.
 
 ### Canonical URL
 
-- The **canonical share URL** for a signal is the version without the category prefix (`/{slug}`), e.g. `/bitcoin-etf-20261105`.
-- When the recipient opens the canonical URL, the background feed is the root feed (all categories) and the detail modal is open.
-- Category-prefixed URLs (`/{category}/{slug}`) are valid and routable, but the canonical share should strip the prefix.
+- The **canonical share URL** for a signal is the SSR page: `/signal/{slug}`, e.g. `/signal/bitcoin-etf-20261105`.
+- When the recipient opens the canonical URL, they see the full detail page (SSR-rendered). The feed is not shown.
+- Query-based URLs (`/?signal={slug}` or `/{category}?signal={slug}`) are valid for in-app navigation and sharing, but the SSR page is the canonical form for crawlers.
 
 ## Storage Model
 
@@ -162,6 +167,6 @@ Schema details live in `context/database-schema.md` (see the "Cursor Pagination"
 4. **Single LLM Call per Article**: De-noising, translation, tag extraction, and summary must be batched into one OpenRouter request.
 5. **No User-Specific Storage**: No profile, saved signals, tracked tags, or email digest tables exist. User identity is provided entirely by `@nuxtjs/supabase`.
 6. **Server-Enforced Access Control**: Because RLS is disabled, every Nitro API route must verify session via `serverSupabaseUser()` before executing any DB query.
-7. **Slug + Category as URL Identifier**: Every signal must have a unique slug before persistence. Public-facing URLs use the nested route pattern `/{category?}/{slug}` where the `slug` is the canonical article identifier and the optional `category` segment constrains the background feed. API endpoints that take a single resource identifier use `slug`, never `id`. The canonical share URL is the category-less form (`/{slug}`); the recipient lands with the root feed in the background.
+7. **Slug as URL Identifier**: Every signal must have a unique slug before persistence. Public-facing URLs use the query-based pattern `?signal={slug}` for in-app navigation. The canonical share URL is the SSR page `/signal/{slug}`. API endpoints that take a single resource identifier use `slug`, never `id`. The query param approach avoids ambiguous route matching that the nested-route pattern had with Nuxt 4's optional-dynamic `[[category]]` segment.
 8. **Design Compliance**: All UI components must use the OKLCH tokens and spacing conventions in `ui-context.md`.
-9. **Parent Route Mount Persistence**: The `[[category]].vue` parent route is mounted exactly once per browser session. It hosts both the feed and the `<NuxtPage />` slot for the detail modal. Feed state, scroll position, and current category are preserved across detail open/close without `<KeepAlive>` — this is a framework guarantee, not a workaround. Any code that depends on the parent component being always present may rely on this invariant.
+9. **Parent Route Mount Persistence**: The `[[category]].vue` parent route is mounted exactly once per browser session. It hosts both the feed and the signal detail overlay (a sibling component, not a child route). Feed state, scroll position, and current category are preserved across detail open/close without `<KeepAlive>` — this is a framework guarantee, not a workaround. Any code that depends on the parent component being always present may rely on this invariant.

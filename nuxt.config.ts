@@ -4,6 +4,15 @@ import './shared/env'
 export default defineNuxtConfig({
   modules: ['@nuxt/eslint', '@nuxt/ui', '@nuxtjs/supabase'],
 
+  // DEV-AUTH-DISABLED: 關閉 @nuxtjs/supabase 模組內建的 auth-redirect 全域中介層。
+  // 該中介層 (dist/runtime/plugins/auth-redirect.js) 會在未登入時自動 navigateTo('/login'),
+  // 優先於 app/middleware/auth.global.ts 執行,即使後者被註解也仍會觸發。
+  // 重新啟用:移除下一行,並一併還原 auth.global.ts / login.vue / 各 useFetch onResponseError /
+  // serverSupabaseUser 區塊(全專案共 8 處 DEV-AUTH-DISABLED 標記)。
+  supabase: {
+    redirect: false,
+  },
+
   devtools: {
     enabled: true,
   },
@@ -29,10 +38,6 @@ export default defineNuxtConfig({
   colorMode: {
     preference: 'dark',
     fallback: 'dark',
-  },
-
-  routeRules: {
-    '/': { prerender: true },
   },
 
   compatibilityDate: '2025-01-15',

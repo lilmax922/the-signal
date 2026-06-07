@@ -24,3 +24,4 @@ logs
 !.env.example
 
 .trigger
+context/feature-specs/current-issues.md

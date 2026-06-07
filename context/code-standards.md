@@ -50,7 +50,7 @@
 
 ## Routing
 
-The Signal Feed uses Nuxt **nested routes** to implement the master-detail pattern. The feed layout is the **parent route** (`app/pages/[[category]].vue`) and the signal detail is a **child route** (`app/pages/[[category]]/[slug].vue`) rendered inside the parent's `<NuxtPage />` slot.
+The Signal Feed uses a **query-based overlay** pattern. The feed layout is the parent route (`app/pages/[[category]].vue`) and the signal detail is a sibling overlay component (`signal-detail-overlay.vue`) rendered conditionally when a `?signal=slug` query param is present.
 
 ### File Structure
 
@@ -58,12 +58,12 @@ The Signal Feed uses Nuxt **nested routes** to implement the master-detail patte
 app/pages/
 ├── login.vue                       # /login
 ├── confirm.vue                     # /confirm
-└── [[category]]/
-    ├── [slug].vue                  # Child route: detail modal
-    └── (parent handled by app/pages/[[category]].vue file)
+├── [[category]].vue                # Feed parent route (hosts overlay)
+└── signal/
+    └── [slug].vue                  # SSR detail page for crawlers / direct links
 ```
 
-> `[[category]]` is the Nuxt optional dynamic segment. **There is no `app/pages/index.vue`** — the parent optional route replaces it. A `[[category]]/` directory may or may not exist alongside the file; both layouts are equivalent in Nuxt.
+> `[[category]]` is the Nuxt optional dynamic segment. **There is no `app/pages/index.vue`** — the parent optional route replaces it. The overlay (`signal-detail-overlay.vue`) is rendered by the parent, not by a child route.
 
 ### URL Patterns
 
@@ -71,53 +71,49 @@ app/pages/
 |---|---|
 | Root feed (no filter) | `/` |
 | Filtered feed | `/{category}` |
-| Signal detail | `/{category?}/{slug}` |
+| Signal detail (in-app) | `?signal={slug}` (appended to current URL) |
+| Signal detail (canonical/SSR) | `/signal/{slug}` |
 
 ### Navigation
 
-- **Open a signal from the feed**: `router.push(\`/\${category ?? ''}\${category ? '/' : ''}\${slug}\`)` — preserves the current category in the URL when present.
-- **Close the detail view**: `router.push(\`/\${category ?? ''}\`)` (or `router.push('/')` if there is no category).
-- **Never use `router.replace`** — it removes the previous history entry and breaks browser back navigation. Use `router.push` for both open and close.
-- The optional `category` segment, if present, must be validated against the category enum (`finance | tech | world`). Invalid values render a 404.
+- **Open a signal from the feed**: `router.push({ query: { ...route.query, signal: slug } })` — preserves existing query params (e.g. category filter) and adds the signal query.
+- **Close the detail view**: `router.push({ query: { signal: undefined } })` — removes the signal query param, creates a history entry so browser back/forward works.
+- **Never use `router.replace`** — it removes the previous history entry and breaks browser back navigation. Both open and close must use `router.push`.
+- The overlay is triggered by `route.query.signal` being a non-empty string. The parent reads this and passes it as a prop to `<SignalDetailOverlay>`.
 
 ### Constraints
 
 - The `[[category]].vue` parent component mounts **exactly once per browser session** and stays mounted for the entire session. The feed's reactive state lives in the parent. See `architecture.md` Invariant #9 ("Parent Route Mount Persistence").
-- The child `[slug].vue` is rendered in the parent's `<NuxtPage />` slot. It does not own any feed state.
-- Direct navigation to `/{category?}/{slug}` must render the parent + child together. SSR must produce a page that shows the feed in the background and the detail modal on top.
-- The parent template conditionally renders the modal wrapper based on the presence of `route.params.slug`:
-  ```vue
-  <div v-if="route.params.slug" class="fixed inset-0 z-50 ..." @click.self="closeDetail">
-    <NuxtPage />
-  </div>
-  ```
-- **Do not use `<KeepAlive>`** on the feed parent. The nested route pattern already guarantees the parent stays mounted. KeepAlive would be redundant and may cause subtle issues with the `<NuxtPage />` slot.
+- The overlay (`signal-detail-overlay.vue`) is a sibling component rendered by the parent, not a child route. It owns the full overlay lifecycle (responsive USlideover/UDrawer via `useMediaQuery`, fetch via `useAsyncData`, close via `router.push`).
+- Direct navigation to `/signal/{slug}` renders the standalone SSR detail page (`app/pages/signal/[slug].vue`). This page serves crawlers and direct links — the overlay's Reka UI Teleport does not render during SSR.
+- **Do not use `<KeepAlive>`** on the feed parent. The parent route already guarantees persistence. KeepAlive would be redundant.
 
 ## State Management
 
-Use Pinia stores for client-side reactive state that needs to outlive a single page component. `@pinia/nuxt` auto-imports stores from `app/stores/`.
+Client-side reactive state lives directly in the components that own it. The `[[category]].vue` parent route is the host of the feed's reactive state (items, cursor, hasMore, isLoadingMore) as local refs. The overlay owns its own fetch state via `useAsyncData`.
 
 ### Conventions
 
-- Store files live in `app/stores/` and use the `use*Store` naming pattern: `useSignalFeedStore`, `useSignalDetailStore`.
-- Each store defines its own state, getters, and actions. Components access state via `storeToRefs(store)` to preserve reactivity.
-- **The `[[category]].vue` parent route is the host of the feed store instance.** The store is created on first mount and persists for the session because the parent never unmounts.
-- The detail store is owned by the child `[slug].vue` route, but it reads its data independently of the feed (the child composable fetches `GET /api/signals/[slug]` rather than looking up the feed store).
+- Feed state (`items`, `cursor`, `hasMore`, `isLoadingMore`) lives as local refs in `app/pages/[[category]].vue`. The parent mounts once per browser session, so these refs persist across overlay open/close without any external store.
+- The overlay (`signal-detail-overlay.vue`) owns its own fetch state via `useAsyncData` with the slug as the watch key. It is self-contained — the layout just passes the slug.
+- The SSR detail page (`signal/[slug].vue`) has its own independent `useFetch` — it does not share state with the feed or overlay.
+- If a future feature needs cross-route shared state (e.g. a command palette that accesses feed data from a different route), promote the parent's refs into a Pinia store at that point. Do not premature-optimize with stores.
 
 ### Reference Shapes
 
 ```ts
-// app/stores/use-signal-feed-store.ts
-useSignalFeedStore: {
-  state:   { items, cursor, isLoading, isLoadingMore, hasMore, error, category }
-  actions: { loadMore(), reset(), setCategory(c) }
-}
+// app/pages/[[category]].vue — local refs
+const items = ref<SignalFeed[]>([])
+const cursor = ref<string | null>(null)
+const hasMore = ref(false)
+const isLoadingMore = ref(false)
 
-// app/stores/use-signal-detail-store.ts
-useSignalDetailStore: {
-  state:   { signal, isLoading, notFound, error }
-  actions: { loadBySlug(slug), clear() }
-}
+// app/components/signal/signal-detail-overlay.vue — useAsyncData
+const { data: signal, status } = await useAsyncData<Signal>(
+  `signal-overlay-${slug}`,
+  () => $fetch<Signal>(`/api/signals/${slug}`),
+  { watch: [() => slug] },
+)
 ```
 
 ## Styling
@@ -145,18 +141,17 @@ useSignalDetailStore: {
 ```
 app/
   components/
-    signal/             # Signal components (signal-card.vue, signal-feed.vue, etc.)
+    signal/             # Signal components (signal-card.vue, signal-feed.vue, signal-detail.vue, signal-detail-overlay.vue)
     app/                # Reusable app-wide components (buttons, inputs, etc.)
   composables/          # Client-side composables (use-*.ts)
-  stores/               # Pinia stores (use-signal-feed-store.ts, use-signal-detail-store.ts)
   layouts/
   pages/
     login.vue           # /login (existing)
     confirm.vue         # /confirm (existing)
     settings.vue        # /settings (existing)
-    [[category]]/
-      [slug].vue        # Child route: signal detail modal
-      # (parent handled by app/pages/[[category]].vue)
+    [[category]].vue    # Feed parent route (hosts overlay)
+    signal/
+      [slug].vue        # SSR detail page for crawlers / direct links
   assets/css/
     main.css            # OKLCH tokens, Tailwind config
 

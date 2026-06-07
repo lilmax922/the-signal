@@ -1,16 +1,31 @@
 <script setup lang="ts">
-import type { SignalFeed } from '#shared/validators/signal'
+import type { Category, SignalFeed } from '#shared/validators/signal'
 
-defineProps<{ signal: SignalFeed }>()
+defineProps<{
+  signal: SignalFeed
+  category?: Category
+}>()
+
+const router = useRouter()
+const route = useRoute()
 
 const dateFormatter = new Intl.DateTimeFormat('zh-TW', {
   dateStyle: 'medium',
   timeZone: 'UTC',
 })
+
+function navigate(slug: string): void {
+  router.push({ query: { ...route.query, signal: slug } })
+}
 </script>
 
 <template>
-  <article class="bg-elevated/40 border border-default rounded-2xl overflow-hidden">
+  <NuxtLink
+    class="bg-elevated/40 border border-default rounded-2xl overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+    tabindex="0"
+    @click="navigate(signal.slug)"
+    @keydown.enter="navigate(signal.slug)"
+  >
     <img
       v-if="signal.imageUrl"
       :src="signal.imageUrl"
@@ -53,5 +68,5 @@ const dateFormatter = new Intl.DateTimeFormat('zh-TW', {
         </span>
       </div>
     </div>
-  </article>
+  </NuxtLink>
 </template>
