@@ -20,6 +20,7 @@
     "@extractus/article-extractor": "^8.1.0",
     "@iconify-json/lucide": "^1.2.105",
     "@iconify-json/simple-icons": "^1.2.80",
+    "@nuxt/image": "^2.0.0",
     "@nuxt/ui": "^4.7.1",
     "@nuxtjs/supabase": "2.0.9",
     "@openrouter/sdk": "^0.12.79",

@@ -19,17 +19,27 @@ useHead({
 
 <template>
   <div class="max-w-3xl mx-auto px-4 py-8">
-    <div
+    <SignalDetailSkeleton
       v-if="isLoading"
-      class="p-8 text-sm font-mono text-muted"
-    >
-      載入中…
-    </div>
+    />
     <div
       v-else-if="hasError"
-      class="p-8 text-sm font-mono text-muted"
+      class="p-8"
     >
-      載入失敗
+      <UEmpty
+        icon="i-lucide-alert-circle"
+        title="載入失敗"
+        description="無法取得訊號資料，請稍後再試。"
+        :actions="[
+          {
+            label: '返回首頁',
+            color: 'neutral',
+            variant: 'outline',
+            icon: 'i-lucide-arrow-left',
+            onClick: () => { void navigateTo('/') },
+          },
+        ]"
+      />
     </div>
     <SignalDetail
       v-else-if="signal"

@@ -5,6 +5,7 @@ import { useIntersectionObserver } from '@vueuse/core'
 const props = defineProps<{
   items: SignalFeed[]
   isLoading: boolean
+  isTransitioning: boolean
   isLoadingMore: boolean
   hasMore: boolean
   error: boolean
@@ -36,15 +37,20 @@ useIntersectionObserver(
 
 <template>
   <div>
+    <!-- Transitioning loading bar — visible when switching categories without cache -->
+    <div
+      v-if="isTransitioning"
+      class="fixed top-0 left-0 right-0 h-0.5 bg-primary/50 animate-pulse z-50"
+    />
+
     <!-- Initial-load skeleton (6 cards fills 2 rows on a 3-col desktop grid) -->
     <div
-      v-if="isLoading && items.length === 0"
+      v-if="isLoading"
       class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 max-w-7xl mx-auto px-4 md:px-8 lg:px-12"
     >
-      <USkeleton
+      <SignalCardSkeleton
         v-for="i in 6"
         :key="i"
-        class="h-96 rounded-2xl"
       />
     </div>
 

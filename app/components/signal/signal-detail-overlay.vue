@@ -8,13 +8,16 @@ const route = useRoute()
 const router = useRouter()
 const isDesktop = useMediaQuery('(min-width: 1024px)')
 
-const { data: signal, status } = await useAsyncData<Signal>(
-  `signal-overlay-${props.slug}`,
+const { data: signal, status, refresh } = await useAsyncData<Signal>(
+  () => `signal-overlay-${props.slug}`,
   () => $fetch<Signal>(`/api/signals/${props.slug}`),
-  { watch: [() => props.slug] },
+  {
+    lazy: true,
+    watch: [() => props.slug],
+  },
 )
 
-const isLoading = computed(() => status.value === 'pending' && !signal.value)
+const isLoading = computed(() => (status.value === 'pending' || status.value === 'idle') && !signal.value)
 const hasError = computed(() => status.value === 'error' && !signal.value)
 
 const isOpen = ref(false)
@@ -52,17 +55,27 @@ function handleClose(): void {
   >
     <template #body>
       <div class="h-full overflow-y-auto">
-        <div
+        <SignalDetailSkeleton
           v-if="isLoading"
-          class="p-8 text-sm font-mono text-muted"
-        >
-          載入中…
-        </div>
+        />
         <div
           v-else-if="hasError"
-          class="p-8 text-sm font-mono text-muted"
+          class="p-8"
         >
-          載入失敗
+          <UEmpty
+            icon="i-lucide-alert-circle"
+            title="載入失敗"
+            description="無法取得訊號資料，請稍後再試。"
+            :actions="[
+              {
+                label: '重試',
+                color: 'neutral',
+                variant: 'outline',
+                icon: 'i-lucide-refresh-cw',
+                onClick: () => refresh(),
+              },
+            ]"
+          />
         </div>
         <SignalDetail
           v-else-if="signal"
@@ -81,17 +94,27 @@ function handleClose(): void {
   >
     <template #body>
       <div class="h-full overflow-y-auto">
-        <div
+        <SignalDetailSkeleton
           v-if="isLoading"
-          class="p-8 text-sm font-mono text-muted"
-        >
-          載入中…
-        </div>
+        />
         <div
           v-else-if="hasError"
-          class="p-8 text-sm font-mono text-muted"
+          class="p-6"
         >
-          載入失敗
+          <UEmpty
+            icon="i-lucide-alert-circle"
+            title="載入失敗"
+            description="無法取得訊號資料，請稍後再試。"
+            :actions="[
+              {
+                label: '重試',
+                color: 'neutral',
+                variant: 'outline',
+                icon: 'i-lucide-refresh-cw',
+                onClick: () => refresh(),
+              },
+            ]"
+          />
         </div>
         <SignalDetail
           v-else-if="signal"

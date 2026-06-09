@@ -23,6 +23,7 @@ const feedKey = computed(() => `signal-feed-${category.value ?? 'all'}`)
 const { data, status, refresh } = await useFetch<FeedResponse>('/api/signals', {
   key: feedKey,
   query: computed(() => ({ category: category.value })),
+  lazy: true,
   // DEV-AUTH-DISABLED: 401 自動跳轉已停用,改為單純忽略錯誤。
   // 重新啟用:取消下方 /* … */ 區塊的註解。
   /*
@@ -72,7 +73,8 @@ async function loadMore(): Promise<void> {
   }
 }
 
-const isLoading = computed(() => status.value === 'pending')
+const isLoading = computed(() => (status.value === 'pending' || status.value === 'idle') && items.value.length === 0)
+const isTransitioning = computed(() => status.value === 'pending' && items.value.length > 0)
 const hasError = computed(() => status.value === 'error')
 
 const activeSlug = computed(() => {
@@ -87,6 +89,7 @@ const activeSlug = computed(() => {
       v-bind="{
         items,
         isLoading,
+        isTransitioning,
         isLoadingMore,
         hasMore,
         error: hasError,

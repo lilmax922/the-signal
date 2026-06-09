@@ -26,18 +26,27 @@ function navigate(slug: string): void {
     @click="navigate(signal.slug)"
     @keydown.enter="navigate(signal.slug)"
   >
-    <img
+    <div
       v-if="signal.imageUrl"
-      :src="signal.imageUrl"
-      :alt="signal.titleZh"
-      class="aspect-video w-full object-cover rounded-t-2xl"
-      loading="lazy"
+      class="aspect-video w-full rounded-t-2xl overflow-hidden bg-elevated/40"
     >
+      <NuxtImg
+        :src="signal.imageUrl"
+        :alt="signal.titleZh"
+        class="w-full h-full object-cover"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
     <div class="px-6 py-5 space-y-3">
       <div class="flex items-center gap-2 text-xs font-mono text-muted">
-        <span class="uppercase px-1.5 py-0.5 border border-default rounded">
-          {{ signal.category }}
-        </span>
+        <UBadge
+          :label="signal.category"
+          color="neutral"
+          variant="outline"
+          size="sm"
+          class="uppercase"
+        />
         <time :datetime="signal.publishedAt">
           {{ dateFormatter.format(new Date(signal.publishedAt)) }}
         </time>
@@ -59,13 +68,15 @@ function navigate(slug: string): void {
         v-if="signal.tags.length"
         class="flex flex-wrap gap-2 mt-4"
       >
-        <span
+        <UBadge
           v-for="tag in signal.tags"
           :key="tag.id"
-          class="text-xs font-mono uppercase tracking-wide"
-        >
-          {{ tag.name }}
-        </span>
+          :label="tag.name"
+          color="primary"
+          variant="soft"
+          size="sm"
+          class="font-mono uppercase"
+        />
       </div>
     </div>
   </NuxtLink>
