@@ -15,7 +15,8 @@ jobs:
       NUXT_PUBLIC_SUPABASE_URL: 'https://your-project.supabase.co'
       NUXT_PUBLIC_SUPABASE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy-key
       SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy-service-role-key
-      DATABASE_URL: 'postgresql://postgres:dummy_password@localhost:5432/postgres'
+      DATABASE_URL: 'postgresql://postgres:dummy_password@localhost:6543/postgres'
+      DATABASE_URL_DIRECT: 'postgresql://postgres:dummy_password@localhost:5432/postgres'
       TRIGGER_PROJECT_REF: dummy-ref
       TRIGGER_SECRET_KEY: tr_dev_dummy_secret_key
       OPENROUTER_API_KEY: or_dummy_api_key
