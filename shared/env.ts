@@ -6,6 +6,7 @@ const EnvSchema = z.object({
   NUXT_PUBLIC_SUPABASE_KEY: z.string(),
   SUPABASE_SERVICE_ROLE_KEY: z.string(),
   DATABASE_URL: z.string(),
+  DATABASE_URL_DIRECT: z.string(),
   TRIGGER_PROJECT_REF: z.string(),
   TRIGGER_SECRET_KEY: z.string(),
   OPENROUTER_API_KEY: z.string(),

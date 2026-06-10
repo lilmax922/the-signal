@@ -7,6 +7,6 @@ export default defineConfig({
   out: './server/database/migrations',
   casing: 'snake_case',
   dbCredentials: {
-    url: env.DATABASE_URL,
+    url: env.DATABASE_URL_DIRECT,
   },
 })
