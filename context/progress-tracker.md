@@ -63,13 +63,15 @@ Update this file after every meaningful implementation change.
 
 - **Feed Loading Polish** (`15-feed-loading-polish.md`): Skeleton loading states, NuxtImg optimization, UBadge tag differentiation, copy-link action, Nitro server-side caching for feed and detail, and NuxtUI toast for feedback. Created `signal-card-skeleton.vue` and `signal-detail-skeleton.vue` with `<USkeleton>`. All `<img>` replaced with `<NuxtImg>` in aspect-ratio containers with background placeholders. Tags use `<UBadge color="primary" variant="soft">`, category badges use `variant="outline"`. Signal detail layout restructured with copy-link button copying `signal/{slug}` path. Signal APIs uses Nitro's `routeRules` with 30-day TTL keyed by category/slug. Detail overlay shows skeleton during loading, `<UEmpty>` on error. Toast uses NuxtUI `useToast().add()` with responsive position (bottom-center mobile / bottom-right desktop) and stacked mode. `pnpm lint`, `pnpm typecheck`, and `pnpm build` all pass.
 
+- **Search Command Palette** (`17-search-command-palette.md`): Added `signalSearchSchema` (`q` 1–200 chars, `limit` 1–20 default 15) to `shared/validators/signal.ts`. Created `app/components/responsive-modal.vue` — generic wrapper that renders `UModal` on desktop (≥768px) and `UDrawer` on mobile, controlled via `v-model:open`. Created `app/components/search-command-palette.vue` — `UCommandPalette` with `v-model:searchTerm`, server-side search group (`ignoreFilter: true`), mock `SignalFeed[]` items filtered client-side by title/category/tags, `onSelect` navigates via `router.push({ query: { ...route.query, signal: item.slug } })` matching `signal-card.vue` pattern. Modified `app/components/app/header.vue` — replaced non-functional `UInput` search boxes (desktop + mobile) with clickable `UButton` (search icon + "Search" + `<UKbd>⌘K</UKbd>`), registered `Cmd+K` shortcut via `defineShortcuts({ meta_k: … })`, renders `<ResponsiveModal>` containing `<SearchCommandPalette>`. `pnpm lint`, `pnpm typecheck`, and `pnpm build` all pass.
+
 ## In Progress
 
 - None.
 
 ## Next Up
 
-- **Search / command palette** — separate spec. The header's `<UInput placeholder="Search">` is currently a non-functional placeholder. The backend endpoint `GET /api/signals/search` is also deferred from `#12-signal-api.md:57`.
+- **Search API** — backend endpoint `GET /api/signals/search` deferred from `#12-signal-api.md:57`. The command palette currently uses mock data.
 - **Slug-collision retries** (`-2`, `-3`, …) in `trigger/refinery-agent.ts` — see Open Questions.
 
 ## Open Questions

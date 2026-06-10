@@ -223,7 +223,7 @@ The detail view is implemented as a sibling overlay component (`signal-detail-ov
 ### Command Palette
 - Triggered by the search input or `⌘K`.
 - Searches signal titles, content, and entity tag names.
-- Results render as a compact list of Signal Card previews within the palette overlay.
+- Results render as a list of signal items within the palette overlay.
 - Selecting a result navigates to the canonical signal URL (e.g. `/{slug}` — see "Canonical URL" in `architecture.md`). The detail modal opens in the current feed context (root or filtered).
 
 ### Avatar Dropdown (Desktop)

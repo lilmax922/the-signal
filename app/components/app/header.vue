@@ -42,6 +42,12 @@ const userMenuItems = computed(() => [
 ])
 */
 
+const isSearchOpen = ref(false)
+
+defineShortcuts({
+  meta_k: () => { isSearchOpen.value = true },
+})
+
 const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 10, minScrollY: 60 })
 </script>
 
@@ -55,18 +61,18 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
       </div>
 
       <div class="hidden lg:flex flex-1 max-w-xl justify-center">
-        <div class="relative w-full max-w-md">
-          <UInput
-            leading-icon="i-lucide:search"
-            placeholder="Search"
-            size="lg"
-            variant="outline"
-            class="w-full"
-          />
-          <UKbd class="absolute inset-e-2 top-1/2 -translate-y-1/2" size="sm">
+        <UButton
+          icon="i-lucide:search"
+          label="搜尋訊號…"
+          variant="outline"
+          color="neutral"
+          class="w-full max-w-md justify-between"
+          @click="isSearchOpen = true"
+        >
+          <UKbd size="sm" class="ms-auto">
             <span class="text-xs">⌘K</span>
           </UKbd>
-        </div>
+        </UButton>
       </div>
 
       <!-- DEV-AUTH-DISABLED: 原本的 UDropdownMenu + 頭像已替換為 disabled 佔位按鈕,維持 header 寬度。 -->
@@ -87,15 +93,18 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
       :class="isMobileHeaderCollapsed ? 'max-h-0' : 'max-h-30'"
     >
       <div class="px-4 pt-3">
-        <div class="relative">
-          <UInput
-            leading-icon="i-lucide:search"
-            placeholder="Search"
-            size="md"
-            variant="outline"
-            class="w-full"
-          />
-        </div>
+        <UButton
+          icon="i-lucide:search"
+          label="搜尋訊號…"
+          variant="outline"
+          color="neutral"
+          class="w-full justify-between"
+          @click="isSearchOpen = true"
+        >
+          <UKbd size="sm" class="ms-auto hidden lg:inline-flex">
+            <span class="text-xs">⌘K</span>
+          </UKbd>
+        </UButton>
       </div>
       <div class="px-4 pb-3">
         <CategoryFilter />
@@ -107,4 +116,12 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
     class="lg:hidden transition-[height] duration-300 ease-out"
     :class="isMobileHeaderCollapsed ? 'h-16' : 'h-46'"
   />
+
+  <ResponsiveModal
+    v-model:open="isSearchOpen"
+    :modal-ui="{ content: 'max-w-xl' }"
+    :drawer-ui="{ content: 'h-1/2' }"
+  >
+    <SearchCommandPalette @select="isSearchOpen = false" />
+  </ResponsiveModal>
 </template>

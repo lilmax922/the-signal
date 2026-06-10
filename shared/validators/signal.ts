@@ -70,3 +70,12 @@ export const signalQuerySchema = z.object({
 })
 
 export type SignalQuery = z.infer<typeof signalQuerySchema>
+
+// ─── Search ──────────────────────────────────────────────────────────────────
+
+export const signalSearchSchema = z.object({
+  q: z.string().min(1).max(200),
+  limit: z.coerce.number().int().min(1).max(20).default(15),
+})
+
+export type SignalSearch = z.infer<typeof signalSearchSchema>
