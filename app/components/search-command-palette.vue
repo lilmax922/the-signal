@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { SignalFeed } from '#shared/validators/signal'
-import { useDebounceFn } from '@vueuse/core'
-import { signalSearchSchema } from '#shared/validators/signal'
+import { refDebounced } from '@vueuse/core'
 
 const emit = defineEmits<{ select: [] }>()
 
@@ -9,59 +8,40 @@ const router = useRouter()
 const route = useRoute()
 
 const searchTerm = ref('')
-const isLoading = ref(false)
+const debouncedSearchTerm = refDebounced(searchTerm, 300)
+const hasSearched = ref(false)
 
-const mockSignals: SignalFeed[] = [
-  {
-    id: '1',
-    slug: 'nvda-earnings-20260605',
-    category: 'finance',
-    titleEn: 'NVIDIA Earnings Surpass Expectations',
-    titleZh: '輝達財報超預期，AI 需求持續推動成長',
-    summaryZh: ['營收年增 69%', '資料中心業務創歷史新高', 'CEO 黃仁勋看好下半年成長'],
-    imageUrl: null,
-    publishedAt: '2026-06-05T08:00:00.000Z',
-    tags: [{ id: 't1', name: 'NVDA' }, { id: 't2', name: 'AI' }],
-  },
-  {
-    id: '2',
-    slug: 'apple-ai-strategy-20260605',
-    category: 'tech',
-    titleEn: 'Apple Expands On-Device AI Capabilities',
-    titleZh: '蘋果擴大裝置端 AI 功能，搶占智慧手機市場',
-    summaryZh: ['Siri 將搭載大型語言模型', 'iOS 20 新增 AI 摘要功能', '隱私保護成為核心差異化優勢'],
-    imageUrl: null,
-    publishedAt: '2026-06-05T07:30:00.000Z',
-    tags: [{ id: 't3', name: 'AAPL' }, { id: 't4', name: 'LLM' }],
-  },
-  {
-    id: '3',
-    slug: 'global-semiconductor-shortage-20260604',
-    category: 'world',
-    titleEn: 'Global Semiconductor Supply Chain Faces New Pressures',
-    titleZh: '全球半導體供應鏈面臨新壓力，地緣政治風險升溫',
-    summaryZh: ['東南亞產能受限', '各國加速晶片在地化生產', '交貨週期延長至 18 週'],
-    imageUrl: null,
-    publishedAt: '2026-06-04T12:00:00.000Z',
-    tags: [{ id: 't5', name: 'SEMICONDUCTOR' }, { id: 't6', name: 'SUPPLY-CHAIN' }],
-  },
-]
-
-const filteredSignals = computed(() => {
-  if (!searchTerm.value)
-    return []
-  const q = searchTerm.value.toLowerCase()
-  return mockSignals.filter(s =>
-    s.titleZh.toLowerCase().includes(q)
-    || s.titleEn.toLowerCase().includes(q)
-    || s.tags.some(t => t.name.toLowerCase().includes(q))
-    || s.category.toLowerCase().includes(q),
-  )
+const { data, status, execute } = useLazyFetch('/api/signals/search', {
+  query: { q: debouncedSearchTerm, limit: 15 },
+  immediate: false,
+  watch: false,
 })
+
+const isLoading = computed(() => status.value === 'pending')
+const hasFetched = computed(() => status.value === 'success' || status.value === 'error')
+
+watch(debouncedSearchTerm, (val) => {
+  if (val && val.trim()) {
+    hasSearched.value = true
+    execute()
+  }
+  else {
+    data.value = undefined
+    hasSearched.value = false
+  }
+})
+
+const searchResults = computed<SignalFeed[]>(() => {
+  if (!data.value || !Array.isArray(data.value))
+    return []
+  return data.value
+})
+
+const hasResults = computed(() => searchResults.value.length > 0)
 
 const groups = computed(() => {
   const byCategory = new Map<string, SignalFeed[]>()
-  for (const s of filteredSignals.value) {
+  for (const s of searchResults.value) {
     const list = byCategory.get(s.category) ?? []
     list.push(s)
     byCategory.set(s.category, list)
@@ -79,22 +59,6 @@ const groups = computed(() => {
       },
     })),
   }))
-})
-
-const hasResults = computed(() => filteredSignals.value.length > 0)
-
-const debouncedSearch = useDebounceFn(() => {
-  isLoading.value = false
-}, 300)
-
-watch(searchTerm, (val) => {
-  const parsed = signalSearchSchema.safeParse({ q: val })
-  if (!parsed.success || !val) {
-    isLoading.value = false
-    return
-  }
-  isLoading.value = true
-  debouncedSearch()
 })
 </script>
 
@@ -124,10 +88,26 @@ watch(searchTerm, (val) => {
     </template>
 
     <template #empty>
-      <div v-if="searchTerm && !hasResults && !isLoading" class="text-center text-muted py-4">
+      <div v-if="isLoading" class="px-2 py-1 space-y-3">
+        <div
+          v-for="i in 4"
+          :key="i"
+          class="flex flex-col gap-1.5 px-2 py-1.5"
+        >
+          <USkeleton class="h-4 w-3/4" />
+          <div class="flex gap-1.5">
+            <USkeleton class="h-4 w-12 rounded" />
+            <USkeleton class="h-4 w-16 rounded" />
+          </div>
+        </div>
+      </div>
+      <div v-else-if="hasSearched && hasFetched && !hasResults" class="text-center text-muted py-4">
         找不到符合「{{ searchTerm }}」的結果
       </div>
-      <div v-else-if="!searchTerm" class="text-center text-muted py-4">
+      <div v-else-if="status === 'error'" class="text-center text-error py-4">
+        搜尋時發生錯誤，請稍後再試
+      </div>
+      <div v-else-if="!hasSearched" class="text-center text-muted py-4">
         輸入關鍵字搜尋訊號
       </div>
     </template>

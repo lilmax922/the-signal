@@ -13,7 +13,7 @@ const summarySchema = z.array(z.string().min(1)).length(3)
 
 // Embedded tag shape used inside signal responses. Mirrors the `tag` table minus
 // the server-managed timestamps.
-const signalTagSchema = z.object({
+export const signalTagSchema = z.object({
   id: z.uuid(),
   name: z.string().min(1),
 })

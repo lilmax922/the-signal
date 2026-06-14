@@ -8,6 +8,13 @@
       "when": 1780596554705,
       "tag": "0000_deep_catseye",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781109850636,
+      "tag": "0002_flawless_the_hand",
+      "breakpoints": true
     }
   ]
 }

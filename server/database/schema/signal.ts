@@ -41,6 +41,10 @@ export const signal = pgTable('signal', {
   index('idx_signal_finance_published_at_id').on(t.publishedAt.desc(), t.id.desc()).where(sql`${t.category} = 'finance'`),
   index('idx_signal_tech_published_at_id').on(t.publishedAt.desc(), t.id.desc()).where(sql`${t.category} = 'tech'`),
   index('idx_signal_world_published_at_id').on(t.publishedAt.desc(), t.id.desc()).where(sql`${t.category} = 'world'`),
+
+  // GIN trigram indexes for ILIKE search across title columns
+  index('idx_signal_title_zh_trgm').using('gin', sql`${t.titleZh} gin_trgm_ops`),
+  index('idx_signal_title_en_trgm').using('gin', sql`${t.titleEn} gin_trgm_ops`),
 ])
 
 export const InsertSignal = createInsertSchema(signal, {

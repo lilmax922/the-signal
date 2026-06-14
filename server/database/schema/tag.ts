@@ -1,6 +1,7 @@
 import type { z } from 'zod'
-import { relations } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import {
+  index,
   pgTable,
   text,
   timestamp,
@@ -14,7 +15,10 @@ export const tag = pgTable('tag', {
   name: text().notNull().unique(),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-})
+}, t => [
+  // GIN trigram index for ILIKE search on tag names
+  index('idx_tag_name_trgm').using('gin', sql`${t.name} gin_trgm_ops`),
+])
 
 export const InsertTag = createInsertSchema(tag).omit({
   id: true,

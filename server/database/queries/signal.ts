@@ -1,12 +1,14 @@
-import type { Category, FeedResponse } from '#shared/validators/signal'
+import type { Category, FeedResponse, SignalFeed } from '#shared/validators/signal'
 import type { DbClient } from '../index'
 import type { InsertSignal as InsertSignalType } from '../schema'
 import { Buffer } from 'node:buffer'
-import { and, eq, lt, or } from 'drizzle-orm'
+import { and, desc, eq, ilike, lt, or, sql } from 'drizzle-orm'
 import { z } from 'zod'
-import { feedResponseSchema } from '#shared/validators/signal'
+import { feedResponseSchema, signalTagSchema } from '#shared/validators/signal'
 import { db } from '../index'
 import { InsertSignal, signal } from '../schema'
+import { signalTag } from '../schema/signal-tag'
+import { tag } from '../schema/tag'
 
 export async function findSignalByGuid(guid: string) {
   return db.query.signal.findFirst({
@@ -165,4 +167,63 @@ export async function findSignalBySlug(slug: string) {
     publishedAt: row.publishedAt.toISOString(),
     tags: toTags(row.tags),
   }
+}
+
+export async function searchSignals(args: {
+  q: string
+  limit: number
+}): Promise<SignalFeed[]> {
+  // Escape backslashes first, then escape % and _ wildcards
+  const escaped = args.q.replace(/\\/g, '\\\\').replace(/[%_]/g, '\\$&')
+  const pattern = `%${escaped}%`
+
+  const rows = await db
+    .select({
+      id: signal.id,
+      slug: signal.slug,
+      category: signal.category,
+      titleEn: signal.titleEn,
+      titleZh: signal.titleZh,
+      summaryZh: signal.summaryZh,
+      imageUrl: signal.imageUrl,
+      publishedAt: signal.publishedAt,
+      tags: sql<string>`coalesce(json_agg(json_build_object('id', ${tag.id}, 'name', ${tag.name})) filter (where ${tag.id} is not null), '[]')`,
+    })
+    .from(signal)
+    .leftJoin(signalTag, eq(signal.id, signalTag.signalId))
+    .leftJoin(tag, eq(signalTag.tagId, tag.id))
+    .where(
+      or(
+        ilike(signal.titleZh, pattern),
+        ilike(signal.titleEn, pattern),
+        ilike(tag.name, pattern),
+        sql`${sql`array_to_string(${signal.summaryZh}, ' ')`} ilike ${pattern}`,
+        sql`${sql`array_to_string(${signal.summaryEn}, ' ')`} ilike ${pattern}`,
+      ),
+    )
+    .groupBy(signal.id)
+    .orderBy(desc(signal.publishedAt))
+    .limit(args.limit)
+
+  return rows.map((row) => {
+    const parsed = signalTagSchema.array().safeParse(
+      typeof row.tags === 'string' ? JSON.parse(row.tags) : row.tags,
+    )
+
+    if (!parsed.success) {
+      console.error('searchSignals: tag validation failed for signal', row.id, parsed.error)
+    }
+
+    return {
+      id: row.id,
+      slug: row.slug,
+      category: row.category as Category,
+      titleEn: row.titleEn,
+      titleZh: row.titleZh,
+      summaryZh: row.summaryZh,
+      imageUrl: row.imageUrl,
+      publishedAt: row.publishedAt instanceof Date ? row.publishedAt.toISOString() : row.publishedAt,
+      tags: parsed.success ? parsed.data : [],
+    }
+  })
 }

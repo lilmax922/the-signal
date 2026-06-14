@@ -10,7 +10,7 @@ const [DefineContentTemplate, ReuseContentTemplate] = createReusableTemplate()
 
 const isOpen = defineModel<boolean>('open', { default: false })
 
-const isDesktop = useMediaQuery('(min-width: 768px)')
+const isDesktop = useMediaQuery('(min-width: 1024px)')
 </script>
 
 <template>

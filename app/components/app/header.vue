@@ -63,7 +63,7 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
       <div class="hidden lg:flex flex-1 max-w-xl justify-center">
         <UButton
           icon="i-lucide:search"
-          label="搜尋訊號…"
+          label="搜尋訊號..."
           variant="outline"
           color="neutral"
           class="w-full max-w-md justify-between"
@@ -95,16 +95,12 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
       <div class="px-4 pt-3">
         <UButton
           icon="i-lucide:search"
-          label="搜尋訊號…"
+          label="搜尋訊號..."
           variant="outline"
           color="neutral"
-          class="w-full justify-between"
+          class="w-full"
           @click="isSearchOpen = true"
-        >
-          <UKbd size="sm" class="ms-auto hidden lg:inline-flex">
-            <span class="text-xs">⌘K</span>
-          </UKbd>
-        </UButton>
+        />
       </div>
       <div class="px-4 pb-3">
         <CategoryFilter />
@@ -120,7 +116,7 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
   <ResponsiveModal
     v-model:open="isSearchOpen"
     :modal-ui="{ content: 'max-w-xl' }"
-    :drawer-ui="{ content: 'h-1/2' }"
+    :drawer-ui="{ content: 'h-2/3' }"
   >
     <SearchCommandPalette @select="isSearchOpen = false" />
   </ResponsiveModal>
