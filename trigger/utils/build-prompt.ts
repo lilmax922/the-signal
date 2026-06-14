@@ -19,11 +19,22 @@ From the de-noised English content, extract:
 
 ## Stage 2 — Translate to Traditional Chinese (zh-TW)
 
-Translate the de-noised English output from Stage 1 into Traditional Chinese:
+Translate the de-noised English output from Stage 1 into Traditional Chinese characters (繁體中文) only. Never use Simplified Chinese (簡體中文):
 - titleZh: translate titleEn
 - contentZh: translate contentEn
 - summaryZh: translate each point of summaryEn
 - tags: DO NOT translate — keep exactly as produced in Stage 1
+
+### Localization and Wording Requirements (Taiwan/zh-TW)
+- The translation **MUST** strictly follow Taiwan's linguistic habits, idioms, and natural phrasing. Do NOT use terms or phrasing common in Mainland China.
+- **Vocabulary Localization**: You must use standard Taiwan terminology. For example:
+    - Use "軟體" instead of "軟件" (software)
+    - Use "網路" instead of "網絡" (network/internet)
+    - Use "優化" or "最佳化" correctly based on context instead of Mainland Chinese jargon
+    - Use "資訊" instead of "信息" (information)
+    - Use "影片" or "視訊" instead of "視頻" (video)
+    - Use "專案" or "計畫" instead of "項目" (project)
+    - Use "資料" or "數據" instead of "數據" depending on context, and ensure phrasing sounds natural to a Taiwanese tech/news audience.
 
 ## Output Rules
 - Return ONLY a valid JSON object. No markdown fences, no commentary, no explanation.

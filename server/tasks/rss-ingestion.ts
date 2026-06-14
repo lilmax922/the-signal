@@ -54,8 +54,6 @@ export default defineTask({
       results.total += items.length
     }
 
-    console.log(`[rss-ingestion] Processed ${results.total} articles: ${results.new} new, ${results.duplicate} skipped`)
-
     return { result: results }
   },
 })

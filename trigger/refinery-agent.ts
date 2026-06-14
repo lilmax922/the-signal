@@ -1,5 +1,6 @@
 import type { LlmOutput } from '../shared/validators/llm'
 import { OpenRouter } from '@openrouter/sdk'
+import { OpenRouterError } from '@openrouter/sdk/models/errors/openroutererror.js'
 import { logger, schemaTask } from '@trigger.dev/sdk'
 import { db } from '../server/database'
 import { insertSignal } from '../server/database/queries/signal'
@@ -16,6 +17,7 @@ import { generateSlug } from './utils/slug'
 const LOG = {
   START: 'refinery.start',
   EXTRACT_OK: 'refinery.extract.ok',
+  LLM_RAW: 'refinery.llm.raw',
   REFINE_OK: 'refinery.refine.ok',
   SLUG_OK: 'refinery.slug.ok',
   MIRROR_OK: 'refinery.mirror.ok',
@@ -35,7 +37,7 @@ export type RefineryResult = {
 
 class RefineryError extends Error {
   constructor(
-    public readonly code: 'EXTRACT_FAILED' | 'LLM_FAILED' | 'SLUG_FAILED' | 'PERSIST_FAILED',
+    public readonly code: 'EXTRACT_FAILED' | 'LLM_FAILED' | 'LLM_OUTPUT_INVALID' | 'SLUG_FAILED' | 'PERSIST_FAILED',
     message: string,
     public readonly cause?: unknown,
   ) {
@@ -69,20 +71,34 @@ export const refineryAgentTask = schemaTask({
     logger.info(LOG.EXTRACT_OK, { ...log('extract'), contentLength: content.length })
 
     // Step 2 — LLM de-noise + translate + tag + summary
-    let llmOutput: LlmOutput
+    let responseText: string
     try {
       const response = await openrouter.chat.send({
         chatRequest: {
           model: 'google/gemma-4-31b-it:free',
-          messages: [{ role: 'user', content: buildPrompt(payload.title, content) }],
+          messages: [{
+            role: 'user',
+            content: buildPrompt(payload.title, content),
+          }],
           temperature: 0.1,
         },
       })
-      const responseText: string = response.choices?.[0]?.message?.content ?? ''
+      responseText = response.choices?.[0]?.message?.content ?? ''
+    }
+    catch (err) {
+      if (err instanceof OpenRouterError) {
+        throw new RefineryError('LLM_FAILED', err.message)
+      }
+      throw new RefineryError('LLM_FAILED', 'LLM API call failed', err)
+    }
+    logger.info(LOG.LLM_RAW, { ...log('llm'), responseText })
+
+    let llmOutput: LlmOutput
+    try {
       llmOutput = llmOutputSchema.parse(JSON.parse(responseText))
     }
     catch (err) {
-      throw new RefineryError('LLM_FAILED', 'LLM call failed or returned invalid output', err)
+      throw new RefineryError('LLM_OUTPUT_INVALID', 'LLM returned invalid output', err)
     }
     logger.info(LOG.REFINE_OK, {
       ...log('refine'),
