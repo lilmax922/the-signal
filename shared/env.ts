@@ -10,6 +10,7 @@ const EnvSchema = z.object({
   TRIGGER_PROJECT_REF: z.string(),
   TRIGGER_SECRET_KEY: z.string(),
   OPENROUTER_API_KEY: z.string(),
+  CRON_SECRET: z.string(),
 })
 
 export type EnvSchema = z.infer<typeof EnvSchema>

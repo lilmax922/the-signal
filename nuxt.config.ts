@@ -11,6 +11,11 @@ export default defineNuxtConfig({
   // serverSupabaseUser 區塊(全專案共 8 處 DEV-AUTH-DISABLED 標記)。
   supabase: {
     redirect: false,
+    redirectOptions: {
+      login: '/login',
+      callback: '/callback',
+      exclude: ['/api/cron/**'],
+    },
   },
 
   devtools: {
@@ -37,6 +42,16 @@ export default defineNuxtConfig({
     },
     routeRules: {
       'api/signals/**': { cache: { maxAge: 60 * 60 * 24 * 30 } },
+    },
+    vercel: {
+      config: {
+        crons: [
+          {
+            path: '/api/cron/rss-ingestion',
+            schedule: '0 8,20 * * *',
+          },
+        ],
+      },
     },
   },
 
