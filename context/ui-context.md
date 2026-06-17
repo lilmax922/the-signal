@@ -166,7 +166,7 @@ Cards use `rounded-2xl` with a subtle variant.
 
 - **Header**: Fixed full-width top bar. Application title anchored left, centered search input with `⌘K` hint, user avatar anchored right.
 - **Category Filter Rail**: Pinned to the top of the content workspace, always visible above the feed.
-- **Three-Column Feed**: `grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-10` with `max-w-7xl mx-auto`, `px-4 md:px-8 lg:px-12` page margin, and `pb-16` bottom padding (so the end-of-feed marker and the mobile bottom navbar do not crash into the last row). Card geometry stays identical across breakpoints.
+- **Three-Column Feed**: `grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-10` with `pb-16` bottom padding. Width is constrained by the layout's `UContainer`. Card geometry stays identical across breakpoints.
 - **Intelligence Pane**: Right-side panel (USlideover) that opens when a card is selected. The feed remains visible in the background — no layout reflow. Has `p-8` internal padding and a subtle left border. Closing the pane restores the original view.
 
 > The feed and the detail overlay are rendered together via the parent `app/pages/[[category]].vue`: the parent mounts once and hosts both the feed grid and the `signal-detail-overlay.vue` component. Closing the overlay unmounts only the overlay — the parent (and the feed) stays mounted.

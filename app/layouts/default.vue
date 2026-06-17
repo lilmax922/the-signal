@@ -11,12 +11,14 @@ const { isCollapsed: isCategoryFilterCollapsed } = useScrollCollapse({ threshold
       class="hidden lg:block sticky top-16 z-40 bg-black/80 backdrop-blur-md overflow-hidden border-b border-default transition-all duration-300 ease-out"
       :class="isCategoryFilterCollapsed ? 'max-h-0' : 'max-h-[60px]'"
     >
-      <div class="pt-[22px] px-6">
+      <UContainer class="pt-[22px]">
         <CategoryFilter />
-      </div>
+      </UContainer>
     </div>
     <main class="pb-14 lg:pb-0">
-      <slot />
+      <UContainer>
+        <slot />
+      </UContainer>
     </main>
     <MobileBottomNavbar />
   </div>

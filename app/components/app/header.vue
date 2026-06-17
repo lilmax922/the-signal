@@ -55,7 +55,7 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
   <header
     class="fixed top-0 inset-x-0 z-50 bg-black/80 backdrop-blur-md border-b border-default"
   >
-    <div class="h-16 px-4 lg:px-6 flex items-center justify-between gap-4">
+    <UContainer class="h-16 flex items-center justify-between gap-4">
       <div class="flex items-center gap-3 justify-center lg:justify-normal">
         <span class="text-base lg:text-lg font-semibold text-highlighted">The Signal</span>
       </div>
@@ -86,13 +86,13 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
           <UAvatar icon="i-lucide:user" size="sm" />
         </UButton>
       </div>
-    </div>
+    </UContainer>
 
     <div
       class="lg:hidden overflow-hidden border-t border-default transition-all duration-300 ease-out"
       :class="isMobileHeaderCollapsed ? 'max-h-0' : 'max-h-30'"
     >
-      <div class="px-4 pt-3">
+      <UContainer class="pt-3 pb-3 space-y-3">
         <UButton
           icon="i-lucide:search"
           label="搜尋訊號..."
@@ -101,10 +101,8 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
           class="w-full"
           @click="isSearchOpen = true"
         />
-      </div>
-      <div class="px-4 pb-3">
         <CategoryFilter />
-      </div>
+      </UContainer>
     </div>
   </header>
 

@@ -74,7 +74,6 @@ async function loadMore(): Promise<void> {
 }
 
 const isLoading = computed(() => (status.value === 'pending' || status.value === 'idle') && items.value.length === 0)
-const isTransitioning = computed(() => status.value === 'pending' && items.value.length > 0)
 const hasError = computed(() => status.value === 'error')
 
 const activeSlug = computed(() => {
@@ -89,7 +88,6 @@ const activeSlug = computed(() => {
       v-bind="{
         items,
         isLoading,
-        isTransitioning,
         isLoadingMore,
         hasMore,
         error: hasError,

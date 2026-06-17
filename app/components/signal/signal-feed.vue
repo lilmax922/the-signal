@@ -5,7 +5,6 @@ import { useIntersectionObserver } from '@vueuse/core'
 const props = defineProps<{
   items: SignalFeed[]
   isLoading: boolean
-  isTransitioning: boolean
   isLoadingMore: boolean
   hasMore: boolean
   error: boolean
@@ -37,16 +36,10 @@ useIntersectionObserver(
 
 <template>
   <div>
-    <!-- Transitioning loading bar — visible when switching categories without cache -->
-    <div
-      v-if="isTransitioning"
-      class="fixed top-0 left-0 right-0 h-0.5 bg-primary/50 animate-pulse z-50"
-    />
-
     <!-- Initial-load skeleton (6 cards fills 2 rows on a 3-col desktop grid) -->
     <div
       v-if="isLoading"
-      class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 max-w-7xl mx-auto px-4 md:px-8 lg:px-12"
+      class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
     >
       <SignalCardSkeleton
         v-for="i in 6"
@@ -57,7 +50,7 @@ useIntersectionObserver(
     <!-- First-page error (only when we have nothing to show) -->
     <div
       v-else-if="error && items.length === 0"
-      class="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-20"
+      class="py-20"
     >
       <UEmpty
         icon="i-lucide-alert-circle"
@@ -78,7 +71,7 @@ useIntersectionObserver(
     <!-- True empty state (no items at all) -->
     <div
       v-else-if="items.length === 0"
-      class="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-20"
+      class="py-20"
     >
       <UEmpty
         icon="i-lucide-inbox"
@@ -91,7 +84,7 @@ useIntersectionObserver(
     <!-- Items grid (with sentinel + load-more spinner + end-of-feed marker) -->
     <div
       v-else
-      class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-10 max-w-7xl mx-auto px-4 md:px-8 lg:px-12 pb-16"
+      class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-10 pb-16"
     >
       <SignalCard
         v-for="item in items"
