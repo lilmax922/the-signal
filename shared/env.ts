@@ -8,7 +8,7 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string(),
   DATABASE_URL_DIRECT: z.string(),
   TRIGGER_PROJECT_REF: z.string(),
-  TRIGGER_SECRET_KEY: z.string(),
+  TRIGGER_SECRET_KEY: z.string().optional(),
   OPENROUTER_API_KEY: z.string(),
 })
 
