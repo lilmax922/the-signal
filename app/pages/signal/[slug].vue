@@ -9,12 +9,11 @@ const { data: signal, status } = await useFetch<Signal>(
   { key: () => `signal-direct-${slug.value}` },
 )
 
+const signalMeta = computed<Signal | null>(() => signal.value ?? null)
+useSignalMeta(signalMeta)
+
 const isLoading = computed(() => status.value === 'pending' && !signal.value)
 const hasError = computed(() => status.value === 'error' && !signal.value)
-
-useHead({
-  title: computed(() => signal.value ? `${signal.value.titleZh} — The Signal` : 'The Signal'),
-})
 </script>
 
 <template>

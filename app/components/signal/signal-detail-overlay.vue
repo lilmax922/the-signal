@@ -17,6 +17,9 @@ const { data: signal, status, refresh } = await useAsyncData<Signal>(
   },
 )
 
+const signalMeta = computed<Signal | null>(() => signal.value ?? null)
+useSignalMeta(signalMeta)
+
 const isLoading = computed(() => (status.value === 'pending' || status.value === 'idle') && !signal.value)
 const hasError = computed(() => status.value === 'error' && !signal.value)
 

@@ -1,4 +1,9 @@
 <script setup lang="ts">
+const url = useRequestURL()
+const route = useRoute()
+
+const description = 'AI自動化精煉新聞內容，過濾情緒偏見與誇飾用語，呈現客觀事實。'
+
 useHead({
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -11,15 +16,12 @@ useHead({
   },
 })
 
-const title = 'The Signal'
-const description = 'An automated news refinery system designed to strip away emotional bias and hyperbolic language.'
-
 useSeoMeta({
-  title,
+  title: 'The Signal',
   description,
-  ogTitle: title,
   ogDescription: description,
   ogImage: 'https://ui.nuxt.com/assets/templates/nuxt/starter-light.png',
+  ogUrl: () => `${url.origin}${route.path}`,
   twitterCard: 'summary_large_image',
 })
 </script>

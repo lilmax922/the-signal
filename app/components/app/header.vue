@@ -57,7 +57,9 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
   >
     <UContainer class="h-16 flex items-center justify-between gap-4">
       <div class="flex items-center gap-3 justify-center lg:justify-normal">
-        <span class="text-base lg:text-lg font-semibold text-highlighted">The Signal</span>
+        <NuxtLink to="/" class="text-base lg:text-lg font-semibold text-highlighted hover:text-primary transition-colors">
+          The Signal
+        </NuxtLink>
       </div>
 
       <div class="hidden lg:flex flex-1 max-w-xl justify-center">

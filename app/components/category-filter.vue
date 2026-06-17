@@ -1,8 +1,4 @@
 <script setup lang="ts">
-import { categorySchema } from '#shared/validators/signal'
-
-const route = useRoute()
-
 const categories = [
   { label: '全部', slug: null },
   { label: '科技', slug: 'tech' },
@@ -10,18 +6,7 @@ const categories = [
   { label: '國際', slug: 'world' },
 ] as const
 
-const currentCategory = computed<string | null>(() => {
-  const c = route.params.category
-  if (typeof c === 'string' && c !== '') {
-    return c
-  }
-  const s = route.params.slug
-  if (typeof s === 'string' && categorySchema.safeParse(s).success) {
-    return s
-  }
-  return null
-})
-
+const currentCategory = useCurrentCategory()
 const selected = computed(() => {
   const match = categories.find(c => c.slug === currentCategory.value)
   return match?.slug ?? null
