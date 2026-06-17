@@ -29,7 +29,7 @@ const nuxtAliasResolver = {
 export default defineConfig({
   // eslint-disable-next-line node/no-process-env
   project: process.env.TRIGGER_PROJECT_REF!,
-  runtime: 'node',
+  runtime: 'node-22',
   dirs: ['trigger'],
   maxDuration: 3600,
   retries: {

@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { logger } from '@trigger.dev/sdk'
 import sharp from 'sharp'
-import { fetch as undiciFetch } from 'undici'
 import { createStorageClient } from '../../shared/utils/create-storage-client'
 
 const BUCKET = 'signal-images'
@@ -63,7 +62,7 @@ async function compressWebp(input: Uint8Array): Promise<CompressedImage> {
 }
 
 export async function mirrorImage(imageUrl: string): Promise<string> {
-  const response = await undiciFetch(imageUrl, {
+  const response = await fetch(imageUrl, {
     headers: { 'User-Agent': USER_AGENT },
     signal: AbortSignal.timeout(15000),
   })
