@@ -1,8 +1,8 @@
-import type { RssItem } from '#shared/validators/rss'
-import type { Category } from '#shared/validators/signal'
+import type { RssItem } from '../../shared/validators/rss'
+import type { Category } from '../../shared/validators/signal'
 import { XMLParser } from 'fast-xml-parser'
-import { rawRssFeedSchema, rssItemSchema } from '#shared/validators/rss'
-import { categorySchema } from '#shared/validators/signal'
+import { rawRssFeedSchema, rssItemSchema } from '../../shared/validators/rss'
+import { categorySchema } from '../../shared/validators/signal'
 
 const RSS_URLS: Record<Category, string> = {
   finance: 'https://finance.yahoo.com/news/rssindex',
@@ -17,19 +17,26 @@ function extractGuid(guid: string | { '#text': string }): string {
 export async function fetchRssFeed(category: Category): Promise<RssItem[]> {
   const validatedCategory = categorySchema.parse(category)
 
-  const xml = await $fetch(RSS_URLS[validatedCategory], {
+  const response = await fetch(RSS_URLS[validatedCategory], {
     headers: {
       'User-Agent': 'Mozilla/5.0 (compatible; The-Signal/1.0)',
       'Accept': 'application/rss+xml, application/xml, text/xml',
     },
+    signal: AbortSignal.timeout(15000),
   })
+
+  if (!response.ok) {
+    throw new Error(`RSS fetch failed: ${response.status} for category "${category}"`)
+  }
+
+  const xml = await response.text()
 
   const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_',
   })
 
-  const parsed = parser.parse(xml as string)
+  const parsed = parser.parse(xml)
 
   const feed = rawRssFeedSchema.safeParse(parsed)
   if (!feed.success) {
@@ -50,8 +57,6 @@ export async function fetchRssFeed(category: Category): Promise<RssItem[]> {
       return []
     return [result.data]
   })
-
-  console.log(`[fetchRssFeed] Fetched ${items.length} items for category "${category}":`, items)
 
   return items
 }

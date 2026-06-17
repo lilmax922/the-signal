@@ -162,7 +162,6 @@ server/
       [slug].get.ts     # GET /api/signals/[slug] (signal detail)
       search.get.ts     # GET /api/signals/search
   tasks/
-    rss-ingest.ts       # Nitro scheduled task — 08:00 and 20:00 daily
     purge-old.ts        # Nitro scheduled task — 1st of each month
   middleware/
     auth.ts
@@ -176,6 +175,7 @@ server/
     queries/            # Drizzle query helpers
 
 trigger/
+  rss-ingestion.ts      # Scheduled RSS fetch — 01:00, 09:00, 17:00 ET
   refinery.ts           # AI pipeline job
 
 shared/

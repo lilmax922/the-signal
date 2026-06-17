@@ -37,21 +37,8 @@ export default defineNuxtConfig({
     imports: {
       dirs: ['shared/env.ts'],
     },
-    scheduledTasks: {
-      '0 8,20 * * *': ['rss-ingestion'], // 08:00 and 20:00 daily
-    },
     routeRules: {
       'api/signals/**': { cache: { maxAge: 60 * 60 * 24 * 30 } },
-    },
-    vercel: {
-      config: {
-        crons: [
-          {
-            path: '/api/cron/rss-ingestion',
-            schedule: '0 8,20 * * *',
-          },
-        ],
-      },
     },
   },
 

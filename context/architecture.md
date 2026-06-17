@@ -11,7 +11,7 @@
 | Storage         | Supabase Storage                    | Stores mirrored news preview images. Third-party CDN URLs (e.g. Yahoo) are never stored in the DB.                                                     |
 | State Management | Pinia (`@pinia/nuxt`)              | Client-side reactive state (feed items, detail, category). Stores are mounted in the `[[category]].vue` parent route and persist for the entire browser session — the parent never unmounts during detail open/close, so feed state survives without KeepAlive. |
 | AI Pipeline     | Trigger.dev + OpenRouter            | Trigger.dev: long-running background jobs (de-noising, translation, tagging, media mirroring, DB persistence). OpenRouter: LLM access (e.g. Gemma 9B). |
-| Scheduler       | Nitro Scheduled Tasks               | RSS ingestion at 08:00 and 20:00 daily. Monthly data purge on the 1st of each month. Lightweight I/O only — all heavy work is delegated to Trigger.dev. |
+| Scheduler       | Trigger.dev Scheduled Tasks          | RSS ingestion at 01:00, 09:00, and 17:00 ET daily. Monthly data purge (Nitro task) on the 1st of each month. Lightweight I/O only — all heavy work is delegated to Trigger.dev. |
 | Package Manager | pnpm                                | Package manager for the project.                                                                                                                        |
 
 > **Cross-boundary alias bridging**: Nuxt's `#shared` alias is a Nuxt-time path mapping, but the trigger bundler (esbuild, run by the trigger.dev CLI) has no knowledge of it. Files under `server/database/*` use `#shared/...` imports (e.g. `findSignals`), so when the trigger bundle follows that import chain, esbuild cannot resolve the alias. A tiny custom esbuild plugin registered through the `build.extensions` API in `trigger.config.ts` translates `#shared[/...]` to the absolute `<root>/shared[/...].ts` path at resolve time. The plugin mirrors the Nuxt alias — any new shared alias added to `nuxt.config.ts` must be mirrored here. See the "Cross-boundary alias bridging" decision in `progress-tracker.md`.
@@ -42,9 +42,6 @@
 ├── server/                     # Nitro backend
 │   ├── api/
 │   │   └── signals/            # GET /api/signals, GET /api/signals/[slug], GET /api/signals/search
-│   ├── tasks/                  # Nitro scheduled tasks
-│   │   ├── rss-ingest.ts       # 08:00 and 20:00 daily
-│   │   └── purge-old.ts        # 1st of each month
 │   ├── middleware/             # Auth session middleware
 │   ├── utils/                  # Server-only helpers
 │   └── database/
@@ -52,8 +49,10 @@
 │       ├── schema/             # Drizzle table definitions (one file per table)
 │       ├── migrations/         # Drizzle generated migrations
 │       └── queries/            # Drizzle query helpers
-├── trigger/                    # Trigger.dev background jobs
-│   └── refinery.ts             # AI de-noise + translate + tag + media mirror + persist
+├── trigger/                    # Trigger.dev background jobs + scheduled tasks
+│   ├── rss-ingestion.ts        # Scheduled RSS fetch + dedup + hand-off (01:00, 09:00, 17:00 ET)
+│   ├── refinery-agent.ts       # AI de-noise + translate + tag + media mirror + persist
+│   └── utils/                  # Trigger-only helpers (no Nuxt/Nitro dependencies)
 ├── shared/                     # Code shared between app/ and server/
 │   ├── types/                  # TypeScript interfaces (signal.ts, tag.ts, etc.)
 │   ├── constants/              # Shared constants (categories, limits, etc.)
@@ -132,11 +131,11 @@ Schema details live in `context/database-schema.md` (see the "Cursor Pagination"
 
 ## AI Pre-generation Workflow (The "Refinery" Pipeline)
 
-### Stage 1 — Nitro Scheduled Task (08:00 and 20:00 daily)
+### Stage 1 — Trigger.dev Scheduled Task (01:00, 09:00, 17:00 ET)
 
 1. **RSS Ingestion**: Fetch Yahoo News RSS (`finance`, `tech`, `world`).
 2. **Deduplication**: Use `guid` from RSS metadata. Query DB — skip existing guids.
-3. **Hand-off**: Trigger a Trigger.dev job with the validated article batch.
+3. **Trigger Refinery**: Directly call the refinery pipeline for each new article.
 
 ### Stage 2 — Trigger.dev Background Job (per article)
 
