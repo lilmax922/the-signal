@@ -11,10 +11,11 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "nuxt typecheck",
+    "deploy:trigger": "trigger deploy",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "trigger:dev": "npx trigger.dev@latest dev"
+    "trigger:dev": "trigger dev"
   },
   "dependencies": {
     "@extractus/article-extractor": "^8.1.0",
@@ -44,6 +45,7 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^10.3.0",
     "eslint-plugin-format": "^2.0.1",
+    "trigger.dev": "^4.4.6",
     "typescript": "^6.0.3",
     "vue-tsc": "^3.2.7"
   }
