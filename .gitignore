@@ -25,3 +25,4 @@ logs
 
 .trigger
 context/feature-specs/current-issues.md
+.vercel

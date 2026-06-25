@@ -2,7 +2,13 @@ import env from './shared/env'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ['@nuxt/eslint', '@nuxt/ui', '@nuxtjs/supabase', '@nuxt/image'],
+  modules: [
+    '@nuxt/eslint',
+    '@nuxt/ui',
+    '@nuxtjs/supabase',
+    '@nuxt/image',
+    '@vercel/analytics'
+  ],
 
   // DEV-AUTH-DISABLED: 關閉 @nuxtjs/supabase 模組內建的 auth-redirect 全域中介層。
   // 該中介層 (dist/runtime/plugins/auth-redirect.js) 會在未登入時自動 navigateTo('/login'),

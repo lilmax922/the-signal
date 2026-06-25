@@ -27,6 +27,7 @@
     "@openrouter/sdk": "^0.12.79",
     "@supabase/supabase-js": "^2.106.1",
     "@trigger.dev/sdk": "^4.4.6",
+    "@vercel/analytics": "^2.0.1",
     "@vueuse/core": "^14.3.0",
     "concurrently": "^10.0.0",
     "drizzle-orm": "^0.45.2",
