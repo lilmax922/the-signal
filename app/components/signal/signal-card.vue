@@ -27,16 +27,22 @@ function navigate(slug: string): void {
     @keydown.enter="navigate(signal.slug)"
   >
     <div
-      v-if="signal.imageUrl"
       class="aspect-video w-full rounded-t-2xl overflow-hidden bg-elevated/40"
     >
       <NuxtImg
+        v-if="signal.imageUrl"
         :src="signal.imageUrl"
         :alt="signal.titleZh"
         class="w-full h-full object-cover"
         loading="lazy"
         decoding="async"
       />
+      <div
+        v-else
+        class="w-full h-full flex items-center justify-center"
+      >
+        <UIcon name="i-lucide-image" class="size-10 text-muted/40" />
+      </div>
     </div>
     <div class="px-6 py-5 space-y-3">
       <div class="flex items-center gap-2 text-xs font-mono text-muted">

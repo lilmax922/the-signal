@@ -184,8 +184,8 @@ export const refineryAgentTask = schemaTask({
     if (error instanceof RefineryError && error.cause instanceof OpenRouterError) {
       const isRateLimit
         = error.cause instanceof TooManyRequestsResponseError
-        || error.cause.statusCode === 429
-        || error.cause.message.includes('Rate limit exceeded')
+          || error.cause.statusCode === 429
+          || error.cause.message.includes('Rate limit exceeded')
       if (isRateLimit) {
         return { retryAt: new Date(Date.now() + 60_000) }
       }

@@ -7,7 +7,7 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@nuxtjs/supabase',
     '@nuxt/image',
-    '@vercel/analytics'
+    '@vercel/analytics',
   ],
 
   // DEV-AUTH-DISABLED: 關閉 @nuxtjs/supabase 模組內建的 auth-redirect 全域中介層。
