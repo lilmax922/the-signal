@@ -55,6 +55,15 @@ export default defineNuxtConfig({
     fallback: 'dark',
   },
 
+  vite: {
+    optimizeDeps: {
+      include: [
+        '@vueuse/core',
+        'zod',
+      ],
+    },
+  },
+
   compatibilityDate: '2025-01-15',
 
   eslint: {
