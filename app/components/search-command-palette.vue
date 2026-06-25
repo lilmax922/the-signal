@@ -1,65 +1,13 @@
 <script setup lang="ts">
-import type { SignalFeed } from '#shared/validators/signal'
-import { refDebounced } from '@vueuse/core'
-
-const emit = defineEmits<{ select: [] }>()
-
-const router = useRouter()
-const route = useRoute()
-
-const searchTerm = ref('')
-const debouncedSearchTerm = refDebounced(searchTerm, 300)
-const hasSearched = ref(false)
-
-const { data, status, execute } = useLazyFetch('/api/signals/search', {
-  query: { q: debouncedSearchTerm, limit: 15 },
-  immediate: false,
-  watch: false,
-})
-
-const isLoading = computed(() => status.value === 'pending')
-const hasFetched = computed(() => status.value === 'success' || status.value === 'error')
-
-watch(debouncedSearchTerm, (val) => {
-  if (val && val.trim()) {
-    hasSearched.value = true
-    execute()
-  }
-  else {
-    data.value = undefined
-    hasSearched.value = false
-  }
-})
-
-const searchResults = computed<SignalFeed[]>(() => {
-  if (!data.value || !Array.isArray(data.value))
-    return []
-  return data.value
-})
-
-const hasResults = computed(() => searchResults.value.length > 0)
-
-const groups = computed(() => {
-  const byCategory = new Map<string, SignalFeed[]>()
-  for (const s of searchResults.value) {
-    const list = byCategory.get(s.category) ?? []
-    list.push(s)
-    byCategory.set(s.category, list)
-  }
-  return [...byCategory.entries()].map(([cat, signals]) => ({
-    id: cat,
-    label: cat.charAt(0).toUpperCase() + cat.slice(1),
-    ignoreFilter: true,
-    items: signals.map(s => ({
-      ...s,
-      label: s.titleZh,
-      onSelect: () => {
-        router.push({ query: { ...route.query, signal: s.slug } })
-        emit('select')
-      },
-    })),
-  }))
-})
+const {
+  searchTerm,
+  isLoading,
+  isError,
+  hasSearched,
+  hasFetched,
+  hasResults,
+  groups,
+} = useSearch()
 </script>
 
 <template>
@@ -104,7 +52,7 @@ const groups = computed(() => {
       <div v-else-if="hasSearched && hasFetched && !hasResults" class="text-center text-muted py-4">
         找不到符合「{{ searchTerm }}」的結果
       </div>
-      <div v-else-if="status === 'error'" class="text-center text-error py-4">
+      <div v-else-if="isError" class="text-center text-error py-4">
         搜尋時發生錯誤，請稍後再試
       </div>
       <div v-else-if="!hasSearched" class="text-center text-muted py-4">

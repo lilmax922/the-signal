@@ -2,6 +2,7 @@
 import { useScrollCollapse } from '~/composables/use-scroll-collapse'
 
 const { isCollapsed: isCategoryFilterCollapsed } = useScrollCollapse({ threshold: 10, minScrollY: 60 })
+const { isOpen: isSearchOpen } = useSearch()
 </script>
 
 <template>
@@ -21,5 +22,13 @@ const { isCollapsed: isCategoryFilterCollapsed } = useScrollCollapse({ threshold
       </UContainer>
     </main>
     <MobileBottomNavbar />
+
+    <ResponsiveModal
+      v-model:open="isSearchOpen"
+      :modal-ui="{ content: 'max-w-xl' }"
+      :drawer-ui="{ content: 'h-2/3' }"
+    >
+      <SearchCommandPalette />
+    </ResponsiveModal>
   </div>
 </template>

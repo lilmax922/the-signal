@@ -42,10 +42,10 @@ const userMenuItems = computed(() => [
 ])
 */
 
-const isSearchOpen = ref(false)
+const { open: openSearch } = useSearch()
 
 defineShortcuts({
-  meta_k: () => { isSearchOpen.value = true },
+  meta_k: () => { openSearch() },
 })
 
 const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 10, minScrollY: 60 })
@@ -69,7 +69,7 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
           variant="outline"
           color="neutral"
           class="w-full max-w-md justify-between"
-          @click="isSearchOpen = true"
+          @click="openSearch()"
         >
           <UKbd size="sm" class="ms-auto">
             <span class="text-xs">⌘K</span>
@@ -94,15 +94,7 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
       class="lg:hidden overflow-hidden border-t border-default transition-all duration-300 ease-out"
       :class="isMobileHeaderCollapsed ? 'max-h-0' : 'max-h-30'"
     >
-      <UContainer class="pt-3 pb-3 space-y-3">
-        <UButton
-          icon="i-lucide:search"
-          label="搜尋訊號..."
-          variant="outline"
-          color="neutral"
-          class="w-full"
-          @click="isSearchOpen = true"
-        />
+      <UContainer class="pt-3 pb-3">
         <CategoryFilter />
       </UContainer>
     </div>
@@ -110,14 +102,6 @@ const { isCollapsed: isMobileHeaderCollapsed } = useScrollCollapse({ threshold: 
 
   <div
     class="lg:hidden transition-[height] duration-300 ease-out"
-    :class="isMobileHeaderCollapsed ? 'h-16' : 'h-46'"
+    :class="isMobileHeaderCollapsed ? 'h-16' : 'h-32'"
   />
-
-  <ResponsiveModal
-    v-model:open="isSearchOpen"
-    :modal-ui="{ content: 'max-w-xl' }"
-    :drawer-ui="{ content: 'h-2/3' }"
-  >
-    <SearchCommandPalette @select="isSearchOpen = false" />
-  </ResponsiveModal>
 </template>
