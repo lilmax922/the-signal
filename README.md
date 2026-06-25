@@ -1,39 +1,35 @@
 # The Signal
 
-[context/project-overview.md](context/project-overview.md)
+> an AI-powered news refinery that cuts through the noise
 
-## Setup
+## Vision
 
-Make sure to install the dependencies:
+The goal of [The Signal](https://the-signal-news.vercel.app) is to let users understand the truth of a news in under 10 seconds.
 
-```bash
-pnpm install
-```
+What the-signal offers:
 
-## Development Server
+- **Instant insights** &ndash; Get the information under 10 seconds with intuitive UI.
+- **Up-to-date news** &ndash; Automatically scrapes multiple news sources daily, offering fresh content.
+- **De-noised fact** &ndash; No emotional bias, just facts.
+- **Shareable URLs** &ndash; Every signal is shareable through the URL, making sharing a breeze.
+- **Semantic search** &ndash; Find signals by tags or topic via the command palette.
 
-Start the development server on `http://localhost:3000`:
+## Tech Stack
 
-```bash
-pnpm dev
-```
+| Layer | Technology |
+|---|---|
+| Framework | Nuxt 4 + Nitro (TypeScript) |
+| UI | Tailwind CSS 4 + Nuxt UI |
+| Auth | Supabase Auth (Google / GitHub OAuth) |
+| Database | PostgreSQL on Supabase (via Drizzle ORM) |
+| Storage | Supabase Storage |
+| AI Pipeline | Trigger.dev + OpenRouter |
+| Deployment | Vercel (frontend), Trigger.dev (background jobs) |
 
-## Production
+## Further Reading
 
-Build the application for production:
-
-```bash
-pnpm build
-```
-
-Locally preview production build:
-
-```bash
-pnpm preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
-
-## Renovate integration
-
-Install [Renovate GitHub app](https://github.com/apps/renovate/installations/select_target) on your repository and you are good to go.
+- [Project Overview](context/project-overview.md)
+- [Architecture](context/architecture.md)
+- [UI & Design System](context/ui-context.md)
+- [Code Standards](context/code-standards.md)
+- [Database Schema](context/database-schema.md)
