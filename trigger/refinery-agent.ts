@@ -1,6 +1,7 @@
 import type { LlmOutput } from '../shared/validators/llm'
 import { OpenRouter } from '@openrouter/sdk'
 import { OpenRouterError } from '@openrouter/sdk/models/errors/openroutererror.js'
+import { TooManyRequestsResponseError } from '@openrouter/sdk/models/errors/toomanyrequestsresponseerror.js'
 import { logger, schemaTask } from '@trigger.dev/sdk'
 import { db } from '../server/database'
 import { insertSignal } from '../server/database/queries/signal'
@@ -52,6 +53,7 @@ const openrouter = new OpenRouter({
 
 export const refineryAgentTask = schemaTask({
   id: 'refinery-agent',
+  queue: { concurrencyLimit: 3 },
   schema: refineryPayloadSchema,
   run: async (payload, { ctx: taskCtx }) => {
     const pipelineRunId = taskCtx.run.id
@@ -87,7 +89,7 @@ export const refineryAgentTask = schemaTask({
     }
     catch (err) {
       if (err instanceof OpenRouterError) {
-        throw new RefineryError('LLM_FAILED', err.message)
+        throw new RefineryError('LLM_FAILED', err.message, err)
       }
       throw new RefineryError('LLM_FAILED', 'LLM API call failed', err)
     }
@@ -177,5 +179,17 @@ export const refineryAgentTask = schemaTask({
     }
     logger.info(LOG.COMPLETE, { ...log('complete'), ...result })
     return result
+  },
+  catchError: async ({ error }) => {
+    if (error instanceof RefineryError && error.cause instanceof OpenRouterError) {
+      const isRateLimit
+        = error.cause instanceof TooManyRequestsResponseError
+        || error.cause.statusCode === 429
+        || error.cause.message.includes('Rate limit exceeded')
+      if (isRateLimit) {
+        return { retryAt: new Date(Date.now() + 60_000) }
+      }
+    }
+    throw error
   },
 })
