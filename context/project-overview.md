@@ -2,7 +2,7 @@
 
 ## Overview
 
-**The Signal** is an automated information refinery system designed to strip away emotional bias and hyperbolic language from news and articles. By transforming raw news reports (from Yahoo News — Finance, Tech, World) into structured, fact-based "Signal Cards," it serves as a noise-filtering terminal for users who need to grasp the objective truth and raw data of a situation in under 10 seconds.
+A website platform that enables users to quickly grasp objective core data within 10 seconds. Through a tailored AI Agent workflow, it automatically scrapes and analyzes news and articles, completely filtering out emotional wording and hyperbolic rhetoric, and distills the raw content into structured, purely fact-based signal cards to efficiently present the full picture of an event.
 
 ## Goals
 
