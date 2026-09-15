@@ -309,10 +309,30 @@ The default page size is `10` (constant `FEED_PAGE_SIZE` in `shared/constants/li
 
 ## Data Retention
 
+Executed by the `purge-old` Trigger.dev scheduled task (`trigger/purge-old.ts`,
+core logic in `trigger/utils/purge.ts`) at 05:00 ET on the 1st of each month —
+after the 01:00 ingestion window so the two jobs never contend on `signal`.
+
 ```sql
--- Executed by server/tasks/purge-old.ts on the 1st of each month
+-- Per batch (oldest first, 500 rows per statement):
 DELETE FROM signal WHERE published_at < NOW() - INTERVAL '3 months';
 -- signal_tag rows cascade automatically via ON DELETE CASCADE.
--- Orphaned tag rows cleaned up in the same job:
-DELETE FROM tag WHERE id NOT IN (SELECT DISTINCT tag_id FROM signal_tag);
+-- Orphaned tag rows cleaned up once, after all signal batches:
+DELETE FROM tag WHERE NOT EXISTS (SELECT 1 FROM signal_tag WHERE tag_id = tag.id);
 ```
+
+- The cutoff is evaluated server-side (`NOW() - INTERVAL '3 months'`) at each
+  statement. Per-statement re-evaluation can only move the boundary later,
+  erring toward under-delete, never over-delete.
+- Storage mirrors are purged too: per signal batch, the job parses each
+  `image_url` to its `{bucket, key}`, drops keys still referenced by surviving
+  (unexpired) signals, and removes the rest from Supabase Storage **before**
+  deleting the rows — Storage-first, so a mid-batch Storage failure aborts the
+  run with the DB untouched (Trigger.dev retries). Deleting rows first would
+  strand orphan files whose keys live only on the rows. Unparseable URLs are
+  skipped and counted (`imagesSkipped`), never deleted blind.
+- Every run logs per-batch counts plus total deleted `signal` / `signal_tag` /
+  `tag` / Storage-object counts (`purge.batch`, `purge.complete`).
+- Safe by default: unless `PURGE_DRY_RUN=false` is set, the job runs in
+  dry-run (count-only) mode — it reports what it *would* delete and deletes
+  nothing. Arm real deletes only after reviewing a dry-run's counts.

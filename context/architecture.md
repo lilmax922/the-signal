@@ -11,7 +11,7 @@
 | Storage         | Supabase Storage                    | Stores mirrored news preview images. Third-party CDN URLs (e.g. Yahoo) are never stored in the DB.                                                     |
 | State Management | Pinia (`@pinia/nuxt`)              | Client-side reactive state (feed items, detail, category). Stores are mounted in the `[[category]].vue` parent route and persist for the entire browser session — the parent never unmounts during detail open/close, so feed state survives without KeepAlive. |
 | AI Pipeline     | Trigger.dev + OpenRouter            | Trigger.dev: long-running background jobs (de-noising, translation, tagging, media mirroring, DB persistence). OpenRouter: LLM access (e.g. Gemma 9B). |
-| Scheduler       | Trigger.dev Scheduled Tasks          | RSS ingestion at 01:00, 09:00, and 17:00 ET daily. Monthly data purge (Nitro task) on the 1st of each month. Lightweight I/O only — all heavy work is delegated to Trigger.dev. |
+| Scheduler       | Trigger.dev Scheduled Tasks          | RSS ingestion at 01:00, 09:00, and 17:00 ET daily. Monthly data purge at 05:00 ET on the 1st of each month (dry-run/count-only unless `PURGE_DRY_RUN=false`). Lightweight I/O only — all heavy work is delegated to Trigger.dev. |
 | Package Manager | pnpm                                | Package manager for the project.                                                                                                                        |
 
 > **Cross-boundary alias bridging**: Nuxt's `#shared` alias is a Nuxt-time path mapping, but the trigger bundler (esbuild, run by the trigger.dev CLI) has no knowledge of it. Files under `server/database/*` use `#shared/...` imports (e.g. `findSignals`), so when the trigger bundle follows that import chain, esbuild cannot resolve the alias. A tiny custom esbuild plugin registered through the `build.extensions` API in `trigger.config.ts` translates `#shared[/...]` to the absolute `<root>/shared[/...].ts` path at resolve time. The plugin mirrors the Nuxt alias — any new shared alias added to `nuxt.config.ts` must be mirrored here. See the "Cross-boundary alias bridging" decision in `progress-tracker.md`.
@@ -51,6 +51,7 @@
 │       └── queries/            # Drizzle query helpers
 ├── trigger/                    # Trigger.dev background jobs + scheduled tasks
 │   ├── rss-ingestion.ts        # Scheduled RSS fetch + dedup + hand-off (01:00, 09:00, 17:00 ET)
+│   ├── purge-old.ts            # Scheduled monthly purge (05:00 ET, 1st of each month)
 │   ├── refinery-agent.ts       # AI de-noise + translate + tag + media mirror + persist
 │   └── utils/                  # Trigger-only helpers (no Nuxt/Nitro dependencies)
 ├── shared/                     # Code shared between app/ and server/
@@ -145,9 +146,9 @@ Schema details live in `context/database-schema.md` (see the "Cursor Pagination"
 7. **Image Mirroring**: Download image → re-encode as WebP via `sharp` (quality 80, capped at 1280 px width; falls back to quality 65 if the result still exceeds a 95 KB soft target) → upload to Supabase Storage → obtain public URL. If `sharp` throws (unrecognised format, etc.), the original bytes are uploaded unchanged.
 8. **Persistence**: Write `signal` row + upsert `tag` rows + write `signal_tag` rows.
 
-### Stage 3 — Nitro Scheduled Task (1st of each month)
+### Stage 3 — Trigger.dev Scheduled Task (1st of each month, 05:00 ET)
 
-9. **Purge**: Delete `signal` rows where `published_at < NOW() - INTERVAL '3 months'`. Cascade removes `signal_tag` rows. Orphaned `tag` rows are cleaned up in the same job.
+9. **Purge** (`trigger/purge-old.ts`, core in `trigger/utils/purge.ts`): Delete `signal` rows where `published_at < NOW() - INTERVAL '3 months'` in batches of 500 (oldest first, per-batch counts logged). Cascade removes `signal_tag` rows. Orphaned `tag` rows are cleaned up once, after all signal batches. Supabase Storage mirrors (`signal-images` bucket) are removed per batch, Storage-first (files before rows; shared files still referenced by surviving signals are excluded). Safe by default — dry-run (count-only) unless `PURGE_DRY_RUN=false` is set in the Trigger.dev environment.
 
 ## Error Handling
 

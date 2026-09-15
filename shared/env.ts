@@ -10,6 +10,10 @@ const EnvSchema = z.object({
   TRIGGER_PROJECT_REF: z.string(),
   TRIGGER_SECRET_KEY: z.string().optional(),
   OPENROUTER_API_KEY: z.string(),
+  // Monthly purge mode: 'true' (default) counts only and deletes nothing;
+  // set to 'false' in the Trigger.dev environment to arm real deletes after
+  // reviewing a dry-run's reported counts.
+  PURGE_DRY_RUN: z.enum(['true', 'false']).default('true'),
 })
 
 export type EnvSchema = z.infer<typeof EnvSchema>
