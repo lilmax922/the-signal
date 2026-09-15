@@ -161,8 +161,6 @@ server/
       index.get.ts      # GET /api/signals (signal list, cursor-paginated)
       [slug].get.ts     # GET /api/signals/[slug] (signal detail)
       search.get.ts     # GET /api/signals/search
-  tasks/
-    purge-old.ts        # Nitro scheduled task — 1st of each month
   middleware/
     auth.ts
   utils/                # Server-only helpers
@@ -176,7 +174,10 @@ server/
 
 trigger/
   rss-ingestion.ts      # Scheduled RSS fetch — 01:00, 09:00, 17:00 ET
-  refinery.ts           # AI pipeline job
+  purge-old.ts          # Scheduled monthly purge — 05:00 ET, 1st of each month
+  refinery-agent.ts     # AI pipeline job
+  utils/
+    purge.ts            # Purge core (batched deletes, orphan + Storage cleanup, dry-run)
 
 shared/
   types/                # TypeScript interfaces (signal.ts, tag.ts, etc.)
