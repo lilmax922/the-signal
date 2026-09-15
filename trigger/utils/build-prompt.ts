@@ -27,6 +27,7 @@ Translate the de-noised English output from Stage 1 into Traditional Chinese cha
 
 ### Localization Requirements (Taiwan Traditional Chinese)
 - Write entirely in Traditional Chinese as used in Taiwan (台灣繁體中文). Wherever a term has different Mainland/Taiwan forms (兩岸異形詞), always use the Taiwan form.
+- Translate faithfully and colloquially from the source; never add facts, background, or commentary not present in the source. Simplify wording, not meaning.
 - Every CJK character must be in Traditional glyph form; any Simplified character is a defect.
 - For proper nouns (people, institutions, currencies, rate terminology), keep the English original on first mention and use the Taiwan-standard transliteration (e.g. rate terms like 升息, institution names like 聯準會).
 
