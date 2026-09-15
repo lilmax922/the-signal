@@ -16,15 +16,15 @@ What the-signal offers:
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Nuxt 4 + Nitro (TypeScript) |
-| UI | Tailwind CSS 4 + Nuxt UI |
-| Auth | Supabase Auth (Google / GitHub OAuth) |
-| Database | PostgreSQL on Supabase (via Drizzle ORM) |
-| Storage | Supabase Storage |
-| AI Pipeline | Trigger.dev + OpenRouter |
-| Deployment | Vercel (frontend), Trigger.dev (background jobs) |
+| Layer       | Technology                                       |
+| ----------- | ------------------------------------------------ |
+| Framework   | Nuxt 4 + Nitro (TypeScript)                      |
+| UI          | Tailwind CSS 4 + Nuxt UI                         |
+| Auth        | Supabase Auth (Google / GitHub OAuth)            |
+| Database    | PostgreSQL on Supabase (via Drizzle ORM)         |
+| Storage     | Supabase Storage                                 |
+| AI Pipeline | Trigger.dev + OpenRouter                         |
+| Deployment  | Vercel (frontend), Trigger.dev (background jobs) |
 
 ## Further Reading
 

@@ -25,16 +25,11 @@ Translate the de-noised English output from Stage 1 into Traditional Chinese cha
 - summaryZh: translate each point of summaryEn
 - tags: DO NOT translate — keep exactly as produced in Stage 1
 
-### Localization and Wording Requirements (Taiwan/zh-TW)
-- The translation **MUST** strictly follow Taiwan's linguistic habits, idioms, and natural phrasing. Do NOT use terms or phrasing common in Mainland China.
-- **Vocabulary Localization**: You must use standard Taiwan terminology. For example:
-    - Use "軟體" instead of "軟件" (software)
-    - Use "網路" instead of "網絡" (network/internet)
-    - Use "優化" or "最佳化" correctly based on context instead of Mainland Chinese jargon
-    - Use "資訊" instead of "信息" (information)
-    - Use "影片" or "視訊" instead of "視頻" (video)
-    - Use "專案" or "計畫" instead of "項目" (project)
-    - Use "資料" or "數據" instead of "數據" depending on context, and ensure phrasing sounds natural to a Taiwanese tech/news audience.
+### Localization Requirements (Taiwan Traditional Chinese)
+- Write entirely in Traditional Chinese as used in Taiwan (台灣繁體中文). Wherever a term has different Mainland/Taiwan forms (兩岸異形詞), always use the Taiwan form.
+- Translate faithfully and colloquially from the source; never add facts, background, or commentary not present in the source. Simplify wording, not meaning.
+- Every CJK character must be in Traditional glyph form; any Simplified character is a defect.
+- For proper nouns (people, institutions, currencies, rate terminology), keep the English original on first mention and use the Taiwan-standard transliteration (e.g. rate terms like 升息, institution names like 聯準會).
 
 ## Output Rules
 - Return ONLY a valid JSON object. No markdown fences, no commentary, no explanation.

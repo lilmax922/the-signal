@@ -14,6 +14,7 @@ import { buildPrompt } from './utils/build-prompt'
 import { extractArticleContent } from './utils/extractor'
 import { mirrorImage } from './utils/mirror-image'
 import { generateSlug } from './utils/slug'
+import { stripJsonFences } from './utils/strip-json-fences'
 
 const LOG = {
   START: 'refinery.start',
@@ -77,7 +78,7 @@ export const refineryAgentTask = schemaTask({
     try {
       const response = await openrouter.chat.send({
         chatRequest: {
-          model: 'google/gemma-4-31b-it:free',
+          models: ['inclusionai/ling-3.0-flash-vl:free'],
           messages: [{
             role: 'user',
             content: buildPrompt(payload.title, content),
@@ -97,7 +98,7 @@ export const refineryAgentTask = schemaTask({
 
     let llmOutput: LlmOutput
     try {
-      llmOutput = llmOutputSchema.parse(JSON.parse(responseText))
+      llmOutput = llmOutputSchema.parse(JSON.parse(stripJsonFences(responseText)))
     }
     catch (err) {
       throw new RefineryError('LLM_OUTPUT_INVALID', 'LLM returned invalid output', err)
