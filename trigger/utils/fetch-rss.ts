@@ -104,10 +104,30 @@ export async function fetchRssFeed(category: Category): Promise<RssItem[]> {
         return []
       }
 
+      const sourceUrl = normalizeLink(item.link)
+
+      // Articles-only ingestion: keep /news/articles/ links, drop videos,
+      // Sounds, iPlayer, and live/blog URLs that the extractor cannot parse.
+      let isArticle = false
+      try {
+        isArticle = new URL(sourceUrl).pathname.includes('/news/articles/')
+      }
+      catch {
+        isArticle = false
+      }
+      if (!isArticle) {
+        logger.warn(`Skipping non-article RSS item for "${validatedCategory}"`, {
+          guid: guidText,
+          title: item.title,
+          link: sourceUrl,
+        })
+        return []
+      }
+
       const result = rssItemSchema.safeParse({
         guid: extractGuid(item.guid),
         title: item.title,
-        sourceUrl: normalizeLink(item.link),
+        sourceUrl,
         publishedAt,
         imageUrl: extractImageUrl(item),
         category: validatedCategory,

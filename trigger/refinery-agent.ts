@@ -15,6 +15,7 @@ import { extractArticleContent } from './utils/extractor'
 import { mirrorImage } from './utils/mirror-image'
 import { generateSlug } from './utils/slug'
 import { stripJsonFences } from './utils/strip-json-fences'
+import { upgradeIchefThumbnail } from './utils/upgrade-image'
 
 const LOG = {
   START: 'refinery.start',
@@ -124,18 +125,32 @@ export const refineryAgentTask = schemaTask({
     logger.info(LOG.SLUG_OK, { ...log('slug'), slug })
 
     // Step 4 — Image mirroring (soft-fail per architecture.md)
+    // Candidates: 1024px-upgraded RSS thumbnail first, RSS original as
+    // fallback. upgradeIchefThumbnail returns the input unchanged for
+    // non-ichef / non-standard-recipe URLs, so dedupe collapses to one.
+    const candidates: string[] = payload.imageUrl
+      ? [...new Set([upgradeIchefThumbnail(payload.imageUrl), payload.imageUrl])]
+      : []
     let mirroredImageUrl: string | null = null
-    if (payload.imageUrl) {
-      try {
-        mirroredImageUrl = await mirrorImage(payload.imageUrl)
-        logger.info(LOG.MIRROR_OK, log('mirror'))
-      }
-      catch (err) {
-        logger.warn(LOG.MIRROR_ERR, { ...log('mirror'), err })
-      }
+    if (candidates.length === 0) {
+      logger.info(LOG.MIRROR_SKIP, log('mirror'))
     }
     else {
-      logger.info(LOG.MIRROR_SKIP, log('mirror'))
+      for (const candidate of candidates) {
+        try {
+          mirroredImageUrl = await mirrorImage(candidate)
+          logger.info(LOG.MIRROR_OK, log('mirror'))
+          break
+        }
+        catch (err) {
+          if (candidate === candidates[candidates.length - 1]) {
+            logger.warn(LOG.MIRROR_ERR, { ...log('mirror'), err })
+          }
+          else {
+            logger.warn(LOG.MIRROR_ERR, { ...log('mirror'), candidateUrl: candidate, err })
+          }
+        }
+      }
     }
 
     // Step 5 — Persist signal, tags, signal_tag junctions

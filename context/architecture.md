@@ -134,16 +134,16 @@ Schema details live in `context/database-schema.md` (see the "Cursor Pagination"
 
 ### Stage 1 — Trigger.dev Scheduled Task (01:00, 09:00, 17:00 ET)
 
-1. **RSS Ingestion**: Fetch BBC News RSS (`business` → `finance`, `technology` → `tech`, `world` → `world`) from `https://feeds.bbci.co.uk/news/{business,technology,world}/rss.xml`. Item images come only from `<media:thumbnail url="...">` (MRSS namespace); `guid` values are normalised by stripping the `#0` / `#1` fragment suffix and `link` values by stripping query params (`?at_medium=RSS&at_campaign=rss`) so dedup keys and stored URLs are canonical.
+1. **RSS Ingestion**: Fetch BBC News RSS (`business` → `finance`, `technology` → `tech`, `world` → `world`) from `https://feeds.bbci.co.uk/news/{business,technology,world}/rss.xml`. Item images come only from `<media:thumbnail url="...">` (MRSS namespace); `guid` values are normalised by stripping the `#0` / `#1` fragment suffix and `link` values by stripping query params (`?at_medium=RSS&at_campaign=rss`) so dedup keys and stored URLs are canonical. Articles-only filter: after normalising the link, keep the item only when its pathname contains `/news/articles/` — video / Sounds / iPlayer links are dropped with a `logger.warn` (guid/title/link).
 2. **Deduplication**: Use `guid` from RSS metadata. Query DB — skip existing guids.
 3. **Trigger Refinery**: Directly call the refinery pipeline for each new article.
 
 ### Stage 2 — Trigger.dev Background Job (per article)
 
-4. **Article Extraction**: `@extractus/article-extractor` per URL. Quality gate: skip if extracted text < 200 characters.
+4. **Article Extraction**: `@extractus/article-extractor` per URL (text only — the extractor plays no role in image selection). Quality gate: skip if extracted text < 200 characters.
 5. **Single LLM Call (OpenRouter)**: One prompt performs: de-noising, Traditional Chinese translation, entity tag extraction (max 3), 3-point summary. Output: validated JSON via Zod.
 6. **Slug Generation**: Slugify `title_en` + append `YYYYMMDD` from `published_at`. If collision exists in DB, append `-2`, `-3`, etc.
-7. **Image Mirroring**: Download image → re-encode as WebP via `sharp` (quality 80, capped at 1280 px width; falls back to quality 65 if the result still exceeds a 95 KB soft target) → upload to Supabase Storage → obtain public URL. If `sharp` throws (unrecognised format, etc.), the original bytes are uploaded unchanged.
+7. **Image Mirroring**: Candidates tried in order via `mirrorImage` until first success: RSS `media:thumbnail` upgraded to 1024px (`/ace/standard/240/` → `/ace/standard/1024/` via the pure `upgradeIchefThumbnail` helper in `trigger/utils/upgrade-image.ts` — a no-op returning the input unchanged for non-ichef hosts, `branded_news`, or non-standard recipes) → RSS original as fallback. Download image → re-encode as WebP via `sharp` (quality 80, capped at 1280 px width; falls back to quality 65 if the result still exceeds a 95 KB soft target) → upload to Supabase Storage → obtain public URL. If `sharp` throws (unrecognised format, etc.), the original bytes are uploaded unchanged. All-miss persists `image_url: null` (soft-fail).
 8. **Persistence**: Write `signal` row + upsert `tag` rows + write `signal_tag` rows.
 
 ### Stage 3 — Trigger.dev Scheduled Task (1st of each month, 05:00 ET)
@@ -163,7 +163,7 @@ Schema details live in `context/database-schema.md` (see the "Cursor Pagination"
 
 1. **Non-Blocking Nitro**: Long-running AI tasks and media uploads must never run on the main Nitro thread — always delegate to `trigger/`.
 2. **Unique Fact Rule**: `guid` deduplication must occur before any AI call is made.
-3. **No Third-Party CDN URLs**: Images must always be mirrored to Supabase Storage. CDN URLs must never be stored in the DB.
+3. **No Third-Party CDN URLs**: Images must always be mirrored to Supabase Storage. CDN URLs must never be stored in the DB. The RSS thumbnail is tried at 1024px first (`upgradeIchefThumbnail`) with the original as fallback; no extraction-image is used — the extractor is text-only.
 4. **Single LLM Call per Article**: De-noising, translation, tag extraction, and summary must be batched into one OpenRouter request.
 5. **No User-Specific Storage**: No profile, saved signals, tracked tags, or email digest tables exist. User identity is provided entirely by `@nuxtjs/supabase`.
 6. **Server-Enforced Access Control**: Because RLS is disabled, every Nitro API route must verify session via `serverSupabaseUser()` before executing any DB query.
