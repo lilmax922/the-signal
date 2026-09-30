@@ -42,7 +42,7 @@ A website platform that enables users to quickly grasp objective core data withi
 
 ### In Scope
 
-- Automated scraping and processing of Yahoo News feeds (Tech, World, Finance categories).
+- Automated scraping and processing of BBC News RSS feeds (business → Finance, technology → Tech, world → World categories).
 - AI Pipeline for de-noising, translation, and structured summarization.
 - Nuxt-based full-stack web application with a focus on Mobile-first responsive design.
 - Supabase integration for Auth, PostgreSQL storage, and image hosting.

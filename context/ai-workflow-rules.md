@@ -1,5 +1,9 @@
 # AI Workflow Rules
 
+## Agent Roles
+
+Research and implementation follow a strict handoff chain: **researcher** (web search for external facts) → **scout** (read-only codebase scan) → **worker** (sole writer thread — the only role that edits files) → **reviewer** (read-only audit). Review findings go to a new worker pass; the reviewer never edits code directly.
+
 ## Approach
 
 Build this project incrementally using a spec-driven workflow. Context files define what to build, how to build it, and the current state of progress. Always implement against these specs — do not infer or invent behavior from scratch.

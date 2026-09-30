@@ -8,7 +8,7 @@
 | UI              | TailwindCSS + NuxtUI                | Component composition and styling.                                                                                                                      |
 | Auth            | @nuxtjs/supabase + Supabase Auth    | Google & GitHub OAuth. Provides `useSupabaseUser()` / `useSupabaseClient()` on the client and `serverSupabaseClient()` / `serverSupabaseUser()` on the server. No custom user or profile table needed. |
 | Database        | Drizzle ORM + Supabase (PostgreSQL) | Type-safe data operations via Drizzle. Connects directly with the service role key — bypasses Supabase RLS entirely. All access control is enforced in the Nitro server layer. |
-| Storage         | Supabase Storage                    | Stores mirrored news preview images. Third-party CDN URLs (e.g. Yahoo) are never stored in the DB.                                                     |
+| Storage         | Supabase Storage                    | Stores mirrored news preview images. Third-party CDN URLs are never stored in the DB.                                                     |
 | State Management | Pinia (`@pinia/nuxt`)              | Client-side reactive state (feed items, detail, category). Stores are mounted in the `[[category]].vue` parent route and persist for the entire browser session — the parent never unmounts during detail open/close, so feed state survives without KeepAlive. |
 | AI Pipeline     | Trigger.dev + OpenRouter            | Trigger.dev: long-running background jobs (de-noising, translation, tagging, media mirroring, DB persistence). OpenRouter: LLM access (e.g. Gemma 9B). |
 | Scheduler       | Trigger.dev Scheduled Tasks          | RSS ingestion at 01:00, 09:00, and 17:00 ET daily. Monthly data purge at 05:00 ET on the 1st of each month (dry-run/count-only unless `PURGE_DRY_RUN=false`). Lightweight I/O only — all heavy work is delegated to Trigger.dev. |
@@ -134,7 +134,7 @@ Schema details live in `context/database-schema.md` (see the "Cursor Pagination"
 
 ### Stage 1 — Trigger.dev Scheduled Task (01:00, 09:00, 17:00 ET)
 
-1. **RSS Ingestion**: Fetch Yahoo News RSS (`finance`, `tech`, `world`).
+1. **RSS Ingestion**: Fetch BBC News RSS (`business` → `finance`, `technology` → `tech`, `world` → `world`) from `https://feeds.bbci.co.uk/news/{business,technology,world}/rss.xml`. Item images come only from `<media:thumbnail url="...">` (MRSS namespace); `guid` values are normalised by stripping the `#0` / `#1` fragment suffix and `link` values by stripping query params (`?at_medium=RSS&at_campaign=rss`) so dedup keys and stored URLs are canonical.
 2. **Deduplication**: Use `guid` from RSS metadata. Query DB — skip existing guids.
 3. **Trigger Refinery**: Directly call the refinery pipeline for each new article.
 
@@ -163,7 +163,7 @@ Schema details live in `context/database-schema.md` (see the "Cursor Pagination"
 
 1. **Non-Blocking Nitro**: Long-running AI tasks and media uploads must never run on the main Nitro thread — always delegate to `trigger/`.
 2. **Unique Fact Rule**: `guid` deduplication must occur before any AI call is made.
-3. **No Third-Party CDN URLs**: Images must always be mirrored to Supabase Storage. Yahoo CDN URLs must never be stored in the DB.
+3. **No Third-Party CDN URLs**: Images must always be mirrored to Supabase Storage. CDN URLs must never be stored in the DB.
 4. **Single LLM Call per Article**: De-noising, translation, tag extraction, and summary must be batched into one OpenRouter request.
 5. **No User-Specific Storage**: No profile, saved signals, tracked tags, or email digest tables exist. User identity is provided entirely by `@nuxtjs/supabase`.
 6. **Server-Enforced Access Control**: Because RLS is disabled, every Nitro API route must verify session via `serverSupabaseUser()` before executing any DB query.

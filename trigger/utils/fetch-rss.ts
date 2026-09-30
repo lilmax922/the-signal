@@ -1,17 +1,59 @@
 import type { RssItem } from '../../shared/validators/rss'
 import type { Category } from '../../shared/validators/signal'
+import { logger } from '@trigger.dev/sdk'
 import { XMLParser } from 'fast-xml-parser'
 import { rawRssFeedSchema, rssItemSchema } from '../../shared/validators/rss'
 import { categorySchema } from '../../shared/validators/signal'
 
 const RSS_URLS: Record<Category, string> = {
-  finance: 'https://finance.yahoo.com/news/rssindex',
-  tech: 'https://news.yahoo.com/rss/tech',
-  world: 'https://news.yahoo.com/rss/world',
+  finance: 'https://feeds.bbci.co.uk/news/business/rss.xml',
+  tech: 'https://feeds.bbci.co.uk/news/technology/rss.xml',
+  world: 'https://feeds.bbci.co.uk/news/world/rss.xml',
 }
 
 function extractGuid(guid: string | { '#text': string }): string {
-  return typeof guid === 'string' ? guid : guid['#text']
+  const raw = typeof guid === 'string' ? guid : guid['#text']
+  // BBC guids carry a `#0` / `#1` fragment suffix — strip it for stable dedup.
+  return raw.split('#')[0]
+}
+
+function normalizeLink(link: string): string {
+  // BBC links carry `?at_medium=RSS&at_campaign=rss` tracking params — strip
+  // query + fragment so the stored sourceUrl is canonical.
+  try {
+    const url = new URL(link)
+    return url.origin + url.pathname
+  }
+  catch {
+    return link
+  }
+}
+
+type MediaThumbnail = { '@_url'?: string, '@url'?: string }
+type MediaContent = { '@_url'?: string }
+
+function first<T>(value: T | T[] | undefined): T | undefined {
+  return Array.isArray(value) ? value[0] : value
+}
+
+function extractImageUrl(item: {
+  'media:thumbnail'?: MediaThumbnail | MediaThumbnail[]
+  'media:content'?: MediaContent | MediaContent[]
+}): string | null {
+  // BBC provides images only via <media:thumbnail url="...">; media:content
+  // is kept as a fallback for robustness. Either tag may repeat (parser
+  // yields an array) — take the first url. Invalid URLs become null so the
+  // item still passes `rssItemSchema` (imageUrl is nullable) instead of
+  // being dropped.
+  const thumbnail = first(item['media:thumbnail'])
+  const content = first(item['media:content'])
+  const raw = thumbnail?.['@_url']
+    ?? thumbnail?.['@url']
+    ?? content?.['@_url']
+    ?? null
+  if (!raw || !URL.canParse(raw))
+    return null
+  return raw
 }
 
 export async function fetchRssFeed(category: Category): Promise<RssItem[]> {
@@ -34,6 +76,9 @@ export async function fetchRssFeed(category: Category): Promise<RssItem[]> {
   const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_',
+    // A feed with a single <item> would otherwise parse as an object, not
+    // an array — force the array shape so the Zod schema always matches.
+    isArray: tagName => tagName === 'item',
   })
 
   const parsed = parser.parse(xml)
@@ -44,18 +89,48 @@ export async function fetchRssFeed(category: Category): Promise<RssItem[]> {
   }
 
   const items = feed.data.rss.channel.item.flatMap((item): RssItem[] => {
-    const result = rssItemSchema.safeParse({
-      guid: extractGuid(item.guid),
-      title: item.title,
-      sourceUrl: item.link,
-      publishedAt: new Date(item.pubDate).toISOString(),
-      imageUrl: item['media:content']?.['@_url'] ?? null,
-      category: validatedCategory,
-    })
+    const guidText = typeof item.guid === 'string' ? item.guid : item.guid['#text']
+    try {
+      let publishedAt: string
+      try {
+        publishedAt = new Date(item.pubDate).toISOString()
+      }
+      catch {
+        logger.warn(`Skipping RSS item with invalid pubDate for "${validatedCategory}"`, {
+          guid: guidText,
+          title: item.title,
+          pubDate: item.pubDate,
+        })
+        return []
+      }
 
-    if (!result.success)
+      const result = rssItemSchema.safeParse({
+        guid: extractGuid(item.guid),
+        title: item.title,
+        sourceUrl: normalizeLink(item.link),
+        publishedAt,
+        imageUrl: extractImageUrl(item),
+        category: validatedCategory,
+      })
+
+      if (!result.success) {
+        logger.warn(`Skipping invalid RSS item for "${validatedCategory}"`, {
+          guid: guidText,
+          title: item.title,
+          error: result.error.message,
+        })
+        return []
+      }
+      return [result.data]
+    }
+    catch (error) {
+      logger.warn(`Skipping RSS item that failed to transform for "${validatedCategory}"`, {
+        guid: guidText,
+        title: item.title,
+        error: error instanceof Error ? error.message : String(error),
+      })
       return []
-    return [result.data]
+    }
   })
 
   return items
