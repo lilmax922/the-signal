@@ -73,20 +73,23 @@ export const refineryAgentTask = schemaTask({
     }
     logger.info(LOG.EXTRACT_OK, { ...log('extract'), contentLength: content.length })
 
-    // Step 2 — LLM de-noise + translate + tag + summary
+    // Step 2 — LLM de-noise + translate + tag + summary (single Free Models Router)
     let responseText: string
+    let servingModel: string
     try {
       const response = await openrouter.chat.send({
         chatRequest: {
-          models: ['inclusionai/ling-3.0-flash-vl:free'],
+          model: 'openrouter/free',
           messages: [{
             role: 'user',
             content: buildPrompt(payload.title, content),
           }],
           temperature: 0.1,
+          responseFormat: { type: 'json_object' },
         },
       })
       responseText = response.choices?.[0]?.message?.content ?? ''
+      servingModel = typeof response.model === 'string' && response.model.length > 0 ? response.model : 'unknown'
     }
     catch (err) {
       if (err instanceof OpenRouterError) {
@@ -94,7 +97,7 @@ export const refineryAgentTask = schemaTask({
       }
       throw new RefineryError('LLM_FAILED', 'LLM API call failed', err)
     }
-    logger.info(LOG.LLM_RAW, { ...log('llm'), responseText })
+    logger.info(LOG.LLM_RAW, { ...log('llm'), responseText, servingModel })
 
     let llmOutput: LlmOutput
     try {
